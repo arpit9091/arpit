@@ -391,6 +391,7 @@ public:
 	virtual CursorShape get_cursor_shape(const Point2 &p_pos = Point2i()) const override;
 
 	PackedStringArray get_configuration_warnings() const override;
+	PackedStringArray get_accessibility_configuration_warnings() const override;
 
 	// This method has to be public (for undo redo).
 	// TODO: Find a better way to do this.

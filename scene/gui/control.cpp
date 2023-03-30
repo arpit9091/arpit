@@ -40,6 +40,7 @@
 #include "core/string/translation.h"
 #include "scene/gui/label.h"
 #include "scene/gui/panel.h"
+#include "scene/gui/scroll_container.h"
 #include "scene/main/canvas_layer.h"
 #include "scene/main/window.h"
 #include "scene/theme/theme_db.h"
@@ -252,6 +253,27 @@ PackedStringArray Control::get_configuration_warnings() const {
 
 	if (data.mouse_filter == MOUSE_FILTER_IGNORE && !data.tooltip.is_empty()) {
 		warnings.push_back(RTR("The Hint Tooltip won't be displayed as the control's Mouse Filter is set to \"Ignore\". To solve this, set the Mouse Filter to \"Stop\" or \"Pass\"."));
+	}
+
+	return warnings;
+}
+
+PackedStringArray Control::get_accessibility_configuration_warnings() const {
+	ERR_READ_THREAD_GUARD_V(PackedStringArray());
+	PackedStringArray warnings = Node::get_accessibility_configuration_warnings();
+
+	String ac_name = get_accessibility_name().strip_edges();
+	if (ac_name.is_empty()) {
+		warnings.push_back(RTR("Accessibility Name must not be empty, or contain only spaces."));
+	}
+	if (ac_name.contains(get_class_name())) {
+		warnings.push_back(RTR("Accessibility Name must not include Node class name."));
+	}
+	for (int i = 0; i < ac_name.length(); i++) {
+		if (is_control(ac_name[i])) {
+			warnings.push_back(RTR("Accessibility Name must not include control character."));
+			break;
+		}
 	}
 
 	return warnings;
@@ -1542,6 +1564,7 @@ void Control::set_scale(const Vector2 &p_scale) {
 	}
 	queue_redraw();
 	_notify_transform();
+	queue_accessibility_update();
 }
 
 Vector2 Control::get_scale() const {
@@ -1558,6 +1581,7 @@ void Control::set_rotation(real_t p_radians) {
 	data.rotation = p_radians;
 	queue_redraw();
 	_notify_transform();
+	queue_accessibility_update();
 }
 
 void Control::set_rotation_degrees(real_t p_degrees) {
@@ -1584,6 +1608,7 @@ void Control::set_pivot_offset(const Vector2 &p_pivot) {
 	data.pivot_offset = p_pivot;
 	queue_redraw();
 	_notify_transform();
+	queue_accessibility_update();
 }
 
 Vector2 Control::get_pivot_offset() const {
@@ -1754,6 +1779,8 @@ void Control::_size_changed() {
 		if (pos_changed) {
 			_notify_transform();
 		}
+
+		queue_accessibility_update();
 	}
 }
 
@@ -2000,7 +2027,7 @@ bool Control::is_drag_successful() const {
 
 void Control::set_focus_mode(FocusMode p_focus_mode) {
 	ERR_MAIN_THREAD_GUARD;
-	ERR_FAIL_INDEX((int)p_focus_mode, 3);
+	ERR_FAIL_INDEX((int)p_focus_mode, 4);
 
 	if (is_inside_tree() && p_focus_mode == FOCUS_NONE && data.focus_mode != FOCUS_NONE && has_focus()) {
 		release_focus();
@@ -2078,6 +2105,7 @@ static Control *_next_control(Control *p_from) {
 Control *Control::find_next_valid_focus() const {
 	ERR_READ_THREAD_GUARD_V(nullptr);
 	Control *from = const_cast<Control *>(this);
+	bool ac_enabled = get_tree() && get_tree()->is_accessibility_enabled();
 
 	while (true) {
 		// If the focus property is manually overwritten, attempt to use it.
@@ -2127,10 +2155,10 @@ Control *Control::find_next_valid_focus() const {
 		}
 
 		if (next_child == from || next_child == this) { // No next control.
-			return (get_focus_mode() == FOCUS_ALL) ? next_child : nullptr;
+			return ((get_focus_mode() == FOCUS_ALL) || (ac_enabled && get_focus_mode() == FOCUS_ACCESSIBILITY)) ? next_child : nullptr;
 		}
 		if (next_child) {
-			if (next_child->get_focus_mode() == FOCUS_ALL) {
+			if ((next_child->get_focus_mode() == FOCUS_ALL) || (ac_enabled && next_child->get_focus_mode() == FOCUS_ACCESSIBILITY)) {
 				return next_child;
 			}
 			from = next_child;
@@ -2165,6 +2193,7 @@ static Control *_prev_control(Control *p_from) {
 Control *Control::find_prev_valid_focus() const {
 	ERR_READ_THREAD_GUARD_V(nullptr);
 	Control *from = const_cast<Control *>(this);
+	bool ac_enabled = get_tree() && get_tree()->is_accessibility_enabled();
 
 	while (true) {
 		// If the focus property is manually overwritten, attempt to use it.
@@ -2208,10 +2237,10 @@ Control *Control::find_prev_valid_focus() const {
 		}
 
 		if (prev_child == from || prev_child == this) { // No prev control.
-			return (get_focus_mode() == FOCUS_ALL) ? prev_child : nullptr;
+			return ((get_focus_mode() == FOCUS_ALL) || (ac_enabled && get_focus_mode() == FOCUS_ACCESSIBILITY)) ? prev_child : nullptr;
 		}
 
-		if (prev_child->get_focus_mode() == FOCUS_ALL) {
+		if ((prev_child->get_focus_mode() == FOCUS_ALL) || (ac_enabled && prev_child->get_focus_mode() == FOCUS_ACCESSIBILITY)) {
 			return prev_child;
 		}
 
@@ -2342,8 +2371,9 @@ void Control::_window_find_focus_neighbor(const Vector2 &p_dir, Node *p_at, cons
 	}
 
 	Control *c = Object::cast_to<Control>(p_at);
+	bool ac_enabled = get_tree() && get_tree()->is_accessibility_enabled();
 
-	if (c && c != this && c->get_focus_mode() == FOCUS_ALL && c->is_visible_in_tree()) {
+	if (c && c != this && ((c->get_focus_mode() == FOCUS_ALL) || (ac_enabled && c->get_focus_mode() == FOCUS_ACCESSIBILITY)) && c->is_visible_in_tree()) {
 		Point2 points[4];
 
 		Transform2D xform = c->get_global_transform();
@@ -3167,6 +3197,35 @@ Control *Control::make_custom_tooltip(const String &p_text) const {
 
 // Base object overrides.
 
+void Control::_accessibility_action_foucs(const Variant &p_data) {
+	grab_focus();
+}
+
+void Control::_accessibility_action_blur(const Variant &p_data) {
+	release_focus();
+}
+
+void Control::_accessibility_action_show_tooltip(const Variant &p_data) {
+	Viewport *vp = get_viewport();
+	if (vp) {
+		vp->show_tooltip(this);
+	}
+}
+
+void Control::_accessibility_action_hide_tooltip(const Variant &p_data) {
+	Viewport *vp = get_viewport();
+	if (vp) {
+		vp->cancel_tooltip();
+	}
+}
+
+void Control::_accessibility_action_scroll_into_view(const Variant &p_data) {
+	ScrollContainer *sc = Object::cast_to<ScrollContainer>(get_parent());
+	if (sc) {
+		sc->ensure_control_visible(this);
+	}
+}
+
 void Control::_notification(int p_notification) {
 	ERR_MAIN_THREAD_GUARD;
 	switch (p_notification) {
@@ -3178,6 +3237,24 @@ void Control::_notification(int p_notification) {
 			saving = false;
 		} break;
 #endif
+
+		case NOTIFICATION_ACCESSIBILITY_UPDATE: {
+			RID ae = get_accessibility_element();
+			ERR_FAIL_COND(ae.is_null());
+
+			DisplayServer::get_singleton()->accessibility_update_set_transform(ae, get_transform());
+			DisplayServer::get_singleton()->accessibility_update_set_bounds(ae, Rect2(Vector2(), data.size_cache));
+			DisplayServer::get_singleton()->accessibility_update_set_tooltip(ae, data.tooltip);
+			DisplayServer::get_singleton()->accessibility_update_set_flag(ae, DisplayServer::AccessibilityFlags::FLAG_CLIPS_CHILDREN, data.clip_contents);
+			DisplayServer::get_singleton()->accessibility_update_set_flag(ae, DisplayServer::AccessibilityFlags::FLAG_TOUCH_PASSTHROUGH, data.mouse_filter == MOUSE_FILTER_PASS);
+
+			DisplayServer::get_singleton()->accessibility_update_add_action(ae, DisplayServer::AccessibilityAction::ACTION_FOCUS, callable_mp(this, &Control::_accessibility_action_foucs));
+			DisplayServer::get_singleton()->accessibility_update_add_action(ae, DisplayServer::AccessibilityAction::ACTION_BLUR, callable_mp(this, &Control::_accessibility_action_blur));
+			DisplayServer::get_singleton()->accessibility_update_add_action(ae, DisplayServer::AccessibilityAction::ACTION_SHOW_TOOLTIP, callable_mp(this, &Control::_accessibility_action_show_tooltip));
+			DisplayServer::get_singleton()->accessibility_update_add_action(ae, DisplayServer::AccessibilityAction::ACTION_HIDE_TOOLTIP, callable_mp(this, &Control::_accessibility_action_hide_tooltip));
+			DisplayServer::get_singleton()->accessibility_update_add_action(ae, DisplayServer::AccessibilityAction::ACTION_SCROLL_INTO_VIEW, callable_mp(this, &Control::_accessibility_action_scroll_into_view));
+		} break;
+
 		case NOTIFICATION_POSTINITIALIZE: {
 			data.initialized = true;
 
@@ -3617,6 +3694,7 @@ void Control::_bind_methods() {
 	BIND_ENUM_CONSTANT(FOCUS_NONE);
 	BIND_ENUM_CONSTANT(FOCUS_CLICK);
 	BIND_ENUM_CONSTANT(FOCUS_ALL);
+	BIND_ENUM_CONSTANT(FOCUS_ACCESSIBILITY);
 
 	BIND_CONSTANT(NOTIFICATION_RESIZED);
 	BIND_CONSTANT(NOTIFICATION_MOUSE_ENTER);

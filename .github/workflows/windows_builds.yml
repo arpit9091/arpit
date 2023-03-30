@@ -7,7 +7,7 @@ on:
 env:
   # Used for the cache key. Add version suffix to force clean build.
   GODOT_BASE_BRANCH: master
-  SCONSFLAGS: verbose=yes warnings=extra werror=yes module_text_server_fb_enabled=yes d3d12=yes
+  SCONSFLAGS: verbose=yes warnings=extra werror=yes module_text_server_fb_enabled=yes d3d12=yes "accesskit_sdk_path=${{github.workspace}}/accesskit_c-v0.10.1/"
   SCONS_CACHE_MSVC_CONFIG: true
 
 concurrency:
@@ -53,6 +53,17 @@ jobs:
 
       - name: Download Direct3D 12 SDK components
         run: python ./misc/scripts/install_d3d12_sdk_windows.py
+
+      - name: Download pre-built AccessKit
+        uses: dsaltares/fetch-gh-release-asset@1.0.0
+        with:
+          repo: AccessKit/accesskit
+          version: tags/accesskit_c-v0.10.1
+          file: accesskit_c-v0.10.1.zip
+          target: accesskit_c-v0.10.1/accesskit_c.zip
+
+      - name: Extract pre-built AccessKit
+        run: Expand-Archive -Force accesskit_c-v0.10.1/accesskit_c.zip ${{github.workspace}}/
 
       - name: Setup MSVC problem matcher
         uses: ammaraskar/msvc-problem-matcher@master
