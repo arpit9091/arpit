@@ -28,8 +28,6 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#ifndef _3D_DISABLED
-
 #include "physics_server_3d.h"
 
 #include "core/config/project_settings.h"
@@ -1225,5 +1223,3 @@ PhysicsServer3DManager::PhysicsServer3DManager() {
 PhysicsServer3DManager::~PhysicsServer3DManager() {
 	singleton = nullptr;
 }
-
-#endif // _3D_DISABLED
