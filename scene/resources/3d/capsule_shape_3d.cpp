@@ -30,6 +30,7 @@
 
 #include "capsule_shape_3d.h"
 
+#include "scene/resources/mesh.h"
 #include "servers/physics_server_3d.h"
 
 Vector<Vector3> CapsuleShape3D::get_debug_mesh_lines() const {
@@ -65,6 +66,141 @@ Vector<Vector3> CapsuleShape3D::get_debug_mesh_lines() const {
 	}
 
 	return points;
+}
+
+Ref<ArrayMesh> CapsuleShape3D::get_debug_arraymesh_faces(const Color &p_modulate) const {
+	int prevrow, thisrow, point;
+	float x, y, z, u, v, w;
+
+	const int rings = 32;
+	const int radial_segments = 32;
+
+	Vector<Vector3> points;
+	Vector<Color> colors;
+	Vector<int> indices;
+	point = 0;
+
+	/* top hemisphere */
+	thisrow = 0;
+	prevrow = 0;
+	for (int j = 0; j <= (rings + 1); j++) {
+		v = j;
+
+		v /= (rings + 1);
+		w = sin(0.5 * Math_PI * v);
+		y = radius * cos(0.5 * Math_PI * v);
+
+		for (int i = 0; i <= radial_segments; i++) {
+			u = i;
+			u /= radial_segments;
+
+			x = -sin(u * Math_TAU);
+			z = cos(u * Math_TAU);
+
+			Vector3 p = Vector3(x * radius * w, y, -z * radius * w);
+			points.push_back(p + Vector3(0.0, 0.5 * height - radius, 0.0));
+			colors.push_back(p_modulate);
+			point++;
+
+			if (i > 0 && j > 0) {
+				indices.push_back(prevrow + i - 1);
+				indices.push_back(prevrow + i);
+				indices.push_back(thisrow + i - 1);
+
+				indices.push_back(prevrow + i);
+				indices.push_back(thisrow + i);
+				indices.push_back(thisrow + i - 1);
+			}
+		}
+
+		prevrow = thisrow;
+		thisrow = point;
+	}
+
+	/* cylinder */
+	thisrow = point;
+	prevrow = 0;
+	for (int j = 0; j <= (rings + 1); j++) {
+		v = j;
+		v /= (rings + 1);
+
+		y = (height - 2.0 * radius) * v;
+		y = (0.5 * height - radius) - y;
+
+		for (int i = 0; i <= radial_segments; i++) {
+			u = i;
+			u /= radial_segments;
+
+			x = -sin(u * Math_TAU);
+			z = cos(u * Math_TAU);
+
+			Vector3 p = Vector3(x * radius, y, -z * radius);
+			points.push_back(p);
+			colors.push_back(p_modulate);
+			point++;
+
+			if (i > 0 && j > 0) {
+				indices.push_back(prevrow + i - 1);
+				indices.push_back(prevrow + i);
+				indices.push_back(thisrow + i - 1);
+
+				indices.push_back(prevrow + i);
+				indices.push_back(thisrow + i);
+				indices.push_back(thisrow + i - 1);
+			}
+		}
+
+		prevrow = thisrow;
+		thisrow = point;
+	}
+
+	/* bottom hemisphere */
+	thisrow = point;
+	prevrow = 0;
+	for (int j = 0; j <= (rings + 1); j++) {
+		v = j;
+
+		v /= (rings + 1);
+		v += 1.0;
+		w = sin(0.5 * Math_PI * v);
+		y = radius * cos(0.5 * Math_PI * v);
+
+		for (int i = 0; i <= radial_segments; i++) {
+			u = i;
+			u /= radial_segments;
+
+			x = -sin(u * Math_TAU);
+			z = cos(u * Math_TAU);
+
+			Vector3 p = Vector3(x * radius * w, y, -z * radius * w);
+			points.push_back(p + Vector3(0.0, -0.5 * height + radius, 0.0));
+			colors.push_back(p_modulate);
+			point++;
+
+			if (i > 0 && j > 0) {
+				indices.push_back(prevrow + i - 1);
+				indices.push_back(prevrow + i);
+				indices.push_back(thisrow + i - 1);
+
+				indices.push_back(prevrow + i);
+				indices.push_back(thisrow + i);
+				indices.push_back(thisrow + i - 1);
+			}
+		}
+
+		prevrow = thisrow;
+		thisrow = point;
+	}
+
+	Ref<ArrayMesh> mesh = memnew(ArrayMesh);
+	Array a;
+	a.resize(Mesh::ARRAY_MAX);
+	a[RS::ARRAY_VERTEX] = points;
+	a[RS::ARRAY_COLOR] = colors;
+	a[RS::ARRAY_INDEX] = indices;
+	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, a);
+
+	return mesh;
 }
 
 real_t CapsuleShape3D::get_enclosing_radius() const {

@@ -29,6 +29,8 @@
 /**************************************************************************/
 
 #include "box_shape_3d.h"
+
+#include "scene/resources/mesh.h"
 #include "servers/physics_server_3d.h"
 
 Vector<Vector3> BoxShape3D::get_debug_mesh_lines() const {
@@ -45,6 +47,163 @@ Vector<Vector3> BoxShape3D::get_debug_mesh_lines() const {
 	}
 
 	return lines;
+}
+
+Ref<ArrayMesh> BoxShape3D::get_debug_arraymesh_faces(const Color &p_modulate) const {
+	int prevrow, thisrow, point;
+	float x, y, z;
+
+	Vector3 start_pos = size * -0.5;
+
+	Vector<Vector3> points;
+	Vector<Color> colors;
+	Vector<int> indices;
+	point = 0;
+
+	// front + back
+	y = start_pos.y;
+	thisrow = point;
+	prevrow = 0;
+	for (int j = 0; j <= 1; j++) {
+		x = start_pos.x;
+		for (int i = 0; i <= 1; i++) {
+			// front
+			points.push_back(Vector3(x, -y, -start_pos.z)); // double negative on the Z!
+			colors.push_back(p_modulate);
+			point++;
+
+			// back
+			points.push_back(Vector3(-x, -y, start_pos.z));
+			colors.push_back(p_modulate);
+			point++;
+
+			if (i > 0 && j > 0) {
+				int i2 = i * 2;
+
+				// front
+				indices.push_back(prevrow + i2 - 2);
+				indices.push_back(prevrow + i2);
+				indices.push_back(thisrow + i2 - 2);
+				indices.push_back(prevrow + i2);
+				indices.push_back(thisrow + i2);
+				indices.push_back(thisrow + i2 - 2);
+
+				// back
+				indices.push_back(prevrow + i2 - 1);
+				indices.push_back(prevrow + i2 + 1);
+				indices.push_back(thisrow + i2 - 1);
+				indices.push_back(prevrow + i2 + 1);
+				indices.push_back(thisrow + i2 + 1);
+				indices.push_back(thisrow + i2 - 1);
+			}
+
+			x += size.x;
+		}
+
+		y += size.y;
+		prevrow = thisrow;
+		thisrow = point;
+	}
+
+	// left + right
+	y = start_pos.y;
+	thisrow = point;
+	prevrow = 0;
+	for (int j = 0; j <= 1; j++) {
+		z = start_pos.z;
+		for (int i = 0; i <= 1; i++) {
+			// right
+			points.push_back(Vector3(-start_pos.x, -y, -z));
+			colors.push_back(p_modulate);
+			point++;
+
+			// left
+			points.push_back(Vector3(start_pos.x, -y, z));
+			colors.push_back(p_modulate);
+			point++;
+
+			if (i > 0 && j > 0) {
+				int i2 = i * 2;
+
+				// right
+				indices.push_back(prevrow + i2 - 2);
+				indices.push_back(prevrow + i2);
+				indices.push_back(thisrow + i2 - 2);
+				indices.push_back(prevrow + i2);
+				indices.push_back(thisrow + i2);
+				indices.push_back(thisrow + i2 - 2);
+
+				// left
+				indices.push_back(prevrow + i2 - 1);
+				indices.push_back(prevrow + i2 + 1);
+				indices.push_back(thisrow + i2 - 1);
+				indices.push_back(prevrow + i2 + 1);
+				indices.push_back(thisrow + i2 + 1);
+				indices.push_back(thisrow + i2 - 1);
+			}
+
+			z += size.z;
+		}
+
+		y += size.y;
+		prevrow = thisrow;
+		thisrow = point;
+	}
+
+	// top + bottom
+	z = start_pos.z;
+	thisrow = point;
+	prevrow = 0;
+	for (int j = 0; j <= 1; j++) {
+		x = start_pos.x;
+		for (int i = 0; i <= 1; i++) {
+			// top
+			points.push_back(Vector3(-x, -start_pos.y, -z));
+			colors.push_back(p_modulate);
+			point++;
+
+			// bottom
+			points.push_back(Vector3(x, start_pos.y, -z));
+			colors.push_back(p_modulate);
+			point++;
+
+			if (i > 0 && j > 0) {
+				int i2 = i * 2;
+
+				// top
+				indices.push_back(prevrow + i2 - 2);
+				indices.push_back(prevrow + i2);
+				indices.push_back(thisrow + i2 - 2);
+				indices.push_back(prevrow + i2);
+				indices.push_back(thisrow + i2);
+				indices.push_back(thisrow + i2 - 2);
+
+				// bottom
+				indices.push_back(prevrow + i2 - 1);
+				indices.push_back(prevrow + i2 + 1);
+				indices.push_back(thisrow + i2 - 1);
+				indices.push_back(prevrow + i2 + 1);
+				indices.push_back(thisrow + i2 + 1);
+				indices.push_back(thisrow + i2 - 1);
+			}
+
+			x += size.x;
+		}
+
+		z += size.z;
+		prevrow = thisrow;
+		thisrow = point;
+	}
+
+	Ref<ArrayMesh> mesh = memnew(ArrayMesh);
+	Array a;
+	a.resize(Mesh::ARRAY_MAX);
+	a[RS::ARRAY_VERTEX] = points;
+	a[RS::ARRAY_COLOR] = colors;
+	a[RS::ARRAY_INDEX] = indices;
+	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, a);
+
+	return mesh;
 }
 
 real_t BoxShape3D::get_enclosing_radius() const {

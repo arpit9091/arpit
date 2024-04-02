@@ -48,11 +48,20 @@ class CollisionShape3D : public Node3D {
 #endif
 	bool disabled = false;
 
+#ifdef DEBUG_ENABLED
+	Color debug_color = Color(0.0, 0.0, 0.0, 0.0);
+	bool debug_fill = false;
+#endif // DEBUG_ENABLED
+
 protected:
 	void _update_in_shape_owner(bool p_xform_only = false);
 
 protected:
 	void _notification(int p_what);
+#ifdef TOOLS_ENABLED
+	bool _property_can_revert(const StringName &p_name) const;
+	bool _property_get_revert(const StringName &p_name, Variant &r_property) const;
+#endif // TOOLS_ENABLED
 	static void _bind_methods();
 
 public:
@@ -63,6 +72,14 @@ public:
 
 	void set_disabled(bool p_disabled);
 	bool is_disabled() const;
+
+#ifdef DEBUG_ENABLED
+	void set_debug_color(const Color &p_color);
+	Color get_debug_color() const;
+
+	void set_enable_debug_fill(bool p_enable);
+	bool get_enable_debug_fill() const;
+#endif // DEBUG_ENABLED
 
 	PackedStringArray get_configuration_warnings() const override;
 
