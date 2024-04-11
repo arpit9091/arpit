@@ -5666,7 +5666,7 @@ void EditorNode::reload_instances_with_path_in_edited_scenes(const String &p_ins
 		for (const KeyValue<int, List<Node *>> &edited_scene_map_elem : edited_scene_map) {
 			// Set the current scene.
 			int current_scene_idx = edited_scene_map_elem.key;
-			editor_data.set_edited_scene(current_scene_idx);
+			_set_current_scene_nocheck(current_scene_idx);
 			Node *current_edited_scene = editor_data.get_edited_scene_root(current_scene_idx);
 
 			// Clear the history for this tab (should we allow history to be retained?).
@@ -5798,13 +5798,7 @@ void EditorNode::reload_instances_with_path_in_edited_scenes(const String &p_ins
 						instantiated_node->set_scene_inherited_state(state);
 						instantiated_node->set_scene_file_path(String());
 					}
-					editor_data.set_edited_scene_root(instantiated_node);
 					current_edited_scene = instantiated_node;
-
-					if (original_node->is_inside_tree()) {
-						SceneTreeDock::get_singleton()->set_edited_scene(current_edited_scene);
-						original_node->get_tree()->set_edited_scene_root(instantiated_node);
-					}
 				}
 
 				// Replace the original node with the instantiated version.
