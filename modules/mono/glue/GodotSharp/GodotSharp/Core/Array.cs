@@ -50,8 +50,7 @@ namespace Godot.Collections
         /// <returns>A new Godot Array.</returns>
         public Array(IEnumerable<Variant> collection) : this()
         {
-            if (collection == null)
-                throw new ArgumentNullException(nameof(collection));
+            ArgumentNullException.ThrowIfNull(collection, nameof(collection));
 
             foreach (Variant element in collection)
                 Add(element);
@@ -67,8 +66,7 @@ namespace Godot.Collections
         /// <returns>A new Godot Array.</returns>
         public Array(Variant[] array)
         {
-            if (array == null)
-                throw new ArgumentNullException(nameof(array));
+            ArgumentNullException.ThrowIfNull(array, nameof(array));
 
             NativeValue = (godot_array.movable)NativeFuncs.godotsharp_array_new();
             _weakReferenceToSelf = DisposablesTracker.RegisterDisposable(this);
@@ -1095,8 +1093,7 @@ namespace Godot.Collections
         /// <returns>A new Godot Array.</returns>
         public Array(IEnumerable<T> collection)
         {
-            if (collection == null)
-                throw new ArgumentNullException(nameof(collection));
+            ArgumentNullException.ThrowIfNull(collection, nameof(collection));
 
             _underlyingArray = new Array();
 
@@ -1114,8 +1111,7 @@ namespace Godot.Collections
         /// <returns>A new Godot Array.</returns>
         public Array(T[] array)
         {
-            if (array == null)
-                throw new ArgumentNullException(nameof(array));
+            ArgumentNullException.ThrowIfNull(array, nameof(array));
 
             _underlyingArray = new Array();
 
@@ -1133,8 +1129,7 @@ namespace Godot.Collections
         /// <returns>A new Godot Array.</returns>
         public Array(Array array)
         {
-            if (array == null)
-                throw new ArgumentNullException(nameof(array));
+            ArgumentNullException.ThrowIfNull(array, nameof(array));
 
             _underlyingArray = array;
         }
