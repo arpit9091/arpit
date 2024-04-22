@@ -33,7 +33,7 @@
 #include "core/config/project_settings.h"
 
 Error RemoteDebuggerPeerWebSocket::connect_to_host(const String &p_uri) {
-	ws_peer = Ref<WebSocketPeer>(WebSocketPeer::create());
+	ws_peer = Ref<WebSocketPeer>(WebSocketPeer::create(true));
 	ERR_FAIL_COND_V(ws_peer.is_null(), ERR_BUG);
 
 	Vector<String> protocols;

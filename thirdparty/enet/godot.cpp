@@ -173,7 +173,7 @@ public:
 		for_hostname = p_for_hostname;
 		tls_options = p_options;
 		udp.instantiate();
-		dtls = Ref<PacketPeerDTLS>(PacketPeerDTLS::create());
+		dtls = Ref<PacketPeerDTLS>(PacketPeerDTLS::create(true));
 		if (p_base->bound) {
 			uint16_t port;
 			p_base->get_socket_address(&local_address, &port);
@@ -271,7 +271,7 @@ public:
 			p_base->close();
 			bind(local_address, port);
 		}
-		server = Ref<DTLSServer>(DTLSServer::create());
+		server = Ref<DTLSServer>(DTLSServer::create(true));
 		server->setup(p_options);
 	}
 

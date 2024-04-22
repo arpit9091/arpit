@@ -33,7 +33,7 @@
 #include "core/os/os.h"
 
 WebSocketMultiplayerPeer::WebSocketMultiplayerPeer() {
-	peer_config = Ref<WebSocketPeer>(WebSocketPeer::create());
+	peer_config = Ref<WebSocketPeer>(WebSocketPeer::create(true));
 }
 
 WebSocketMultiplayerPeer::~WebSocketMultiplayerPeer() {
@@ -41,7 +41,7 @@ WebSocketMultiplayerPeer::~WebSocketMultiplayerPeer() {
 }
 
 Ref<WebSocketPeer> WebSocketMultiplayerPeer::_create_peer() {
-	Ref<WebSocketPeer> peer = Ref<WebSocketPeer>(WebSocketPeer::create());
+	Ref<WebSocketPeer> peer = Ref<WebSocketPeer>(WebSocketPeer::create(true));
 	peer->set_supported_protocols(get_supported_protocols());
 	peer->set_handshake_headers(get_handshake_headers());
 	peer->set_inbound_buffer_size(get_inbound_buffer_size());
@@ -334,7 +334,7 @@ void WebSocketMultiplayerPeer::_poll_server() {
 			continue;
 		} else {
 			if (peer.connection == peer.tcp) {
-				Ref<StreamPeerTLS> tls = Ref<StreamPeerTLS>(StreamPeerTLS::create());
+				Ref<StreamPeerTLS> tls = Ref<StreamPeerTLS>(StreamPeerTLS::create(true));
 				Error err = tls->accept_stream(peer.tcp, tls_server_options);
 				if (err != OK) {
 					to_remove.insert(id);

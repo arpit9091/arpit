@@ -41,7 +41,7 @@
 
 void EditorDebuggerServerWebSocket::poll() {
 	if (pending_peer.is_null() && tcp_server->is_connection_available()) {
-		Ref<WebSocketPeer> peer = Ref<WebSocketPeer>(WebSocketPeer::create());
+		Ref<WebSocketPeer> peer = Ref<WebSocketPeer>(WebSocketPeer::create(true));
 		ERR_FAIL_COND(peer.is_null()); // Bug.
 
 		Vector<String> ws_protocols;

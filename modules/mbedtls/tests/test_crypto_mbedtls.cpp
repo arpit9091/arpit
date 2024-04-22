@@ -63,7 +63,7 @@ void hmac_context_digest_test(HashingContext::HashType ht, String expected_hex) 
 }
 
 Ref<CryptoKey> create_crypto_key(const String &p_key_path, bool p_public_only) {
-	Ref<CryptoKey> crypto_key = Ref<CryptoKey>(CryptoKey::create());
+	Ref<CryptoKey> crypto_key = Ref<CryptoKey>(CryptoKey::create(true));
 	crypto_key->load(p_key_path, p_public_only);
 	return crypto_key;
 }
