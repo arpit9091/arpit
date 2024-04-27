@@ -82,7 +82,7 @@ public:
 		OPENGL_CONTEXT,
 	};
 
-	typedef DisplayServer *(*CreateFunction)(const String &, WindowMode, VSyncMode, uint32_t, const Point2i *, const Size2i &, int p_screen, Error &r_error);
+	typedef DisplayServer *(*CreateFunction)(const String &, WindowMode, VSyncMode, uint32_t, const Point2i *, const Size2i &, int p_screen, bool p_visible, Error &r_error);
 	typedef Vector<String> (*GetRenderingDriversFunction)();
 
 private:
@@ -390,6 +390,7 @@ public:
 
 	virtual WindowID create_sub_window(WindowMode p_mode, VSyncMode p_vsync_mode, uint32_t p_flags, const Rect2i &p_rect = Rect2i());
 	virtual void show_window(WindowID p_id);
+	virtual void hide_window(WindowID p_id);
 	virtual void delete_sub_window(WindowID p_id);
 
 	virtual WindowID window_get_active_popup() const { return INVALID_WINDOW_ID; };
@@ -584,7 +585,7 @@ public:
 	static int get_create_function_count();
 	static const char *get_create_function_name(int p_index);
 	static Vector<String> get_create_function_rendering_drivers(int p_index);
-	static DisplayServer *create(int p_index, const String &p_rendering_driver, WindowMode p_mode, VSyncMode p_vsync_mode, uint32_t p_flags, const Vector2i *p_position, const Vector2i &p_resolution, int p_screen, Error &r_error);
+	static DisplayServer *create(int p_index, const String &p_rendering_driver, WindowMode p_mode, VSyncMode p_vsync_mode, uint32_t p_flags, const Vector2i *p_position, const Vector2i &p_resolution, int p_screen, bool p_visible, Error &r_error);
 
 	DisplayServer();
 	~DisplayServer();
