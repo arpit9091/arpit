@@ -68,37 +68,19 @@ public:
 	void set_json(Ref<JSON> p_json);
 	Ref<JSON> get_json() { return json; };
 
-	void set_scale(float p_scale) {
-		scale = p_scale;
-		_update_image();
-	};
+	void set_scale(float p_scale);
 	float get_scale() { return scale; };
 
-	void set_frame_begin(float p_frame_begin) {
-		frame_begin = CLAMP(p_frame_begin, 0, get_lottie_frame_count());
-		if (frame_begin > frame_end) {
-			frame_end = frame_begin;
-		}
-		_update_image();
-	};
+	void set_frame_begin(float p_frame_begin);
 	float get_frame_begin() { return frame_begin; };
 
-	void set_frame_end(float p_frame_end) {
-		frame_end = CLAMP(p_frame_end, frame_begin, get_lottie_frame_count());
-		_update_image();
-	};
+	void set_frame_end(float p_frame_end);
 	float get_frame_end() { return frame_end; };
 
-	void set_frame_count(int p_frame_count) {
-		frame_count = p_frame_count;
-		_update_image();
-	};
+	void set_frame_count(int p_frame_count);
 	int get_frame_count() { return frame_count; };
 
-	void set_rows(int p_rows) {
-		rows = MIN(p_rows, frame_count);
-		_update_image();
-	}
+	void set_rows(int p_rows);
 	int get_rows() { return rows; }
 
 	float get_lottie_duration() { return animation->duration(); };
@@ -113,6 +95,14 @@ public:
 	virtual RID get_rid() const override;
 
 	~LottieTexture2D();
+};
+
+class ResourceFormatLoaderLottie : public ResourceFormatLoader {
+public:
+	virtual Ref<Resource> load(const String &p_path, const String &p_original_path = "", Error *r_error = nullptr, bool p_use_sub_threads = false, float *r_progress = nullptr, CacheMode p_cache_mode = CACHE_MODE_REUSE) override;
+	virtual void get_recognized_extensions(List<String> *p_extensions) const override;
+	virtual bool handles_type(const String &p_type) const override;
+	virtual String get_resource_type(const String &p_path) const override;
 };
 
 #endif // LOTTIE_TEXTURE_H
