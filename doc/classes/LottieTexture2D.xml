@@ -14,6 +14,7 @@
 			<param index="2" name="p_frame_end" type="float" default="0" />
 			<param index="3" name="p_frame_count" type="int" default="1" />
 			<param index="4" name="p_scale" type="float" default="1" />
+			<param index="5" name="p_rows" type="int" default="-1" />
 			<description>
 			</description>
 		</method>
@@ -24,6 +25,7 @@
 			<param index="2" name="p_frame_end" type="float" default="0" />
 			<param index="3" name="p_frame_count" type="int" default="1" />
 			<param index="4" name="p_scale" type="float" default="1" />
+			<param index="5" name="p_rows" type="int" default="-1" />
 			<description>
 			</description>
 		</method>
@@ -37,6 +39,24 @@
 			<return type="float" />
 			<description>
 				Returns the Lottie animation total frame.
+			</description>
+		</method>
+		<method name="get_lottie_image_size">
+			<return type="Vector2" />
+			<description>
+				Returns the Lottie image size of each frame.
+			</description>
+		</method>
+		<method name="update">
+			<return type="void" />
+			<param index="0" name="p_json" type="JSON" />
+			<param index="1" name="p_frame_begin" type="float" />
+			<param index="2" name="p_frame_end" type="float" />
+			<param index="3" name="p_frame_count" type="int" />
+			<param index="4" name="p_scale" type="float" />
+			<param index="5" name="p_rows" type="int" />
+			<description>
+				Sets all properties at once, which is more efficient than setting properties one by one.
 			</description>
 		</method>
 	</methods>

@@ -62,8 +62,10 @@ protected:
 	static void _bind_methods();
 
 public:
-	static Ref<LottieTexture2D> create_from_string(String p_string, float p_frame_begin = 0, float p_frame_end = 0, int p_frame_count = 1, float p_scale = 1);
-	static Ref<LottieTexture2D> create_from_json(Ref<JSON> p_json, float p_frame_begin = 0, float p_frame_end = 0, int p_frame_count = 1, float p_scale = 1);
+	static Ref<LottieTexture2D> create_from_string(String p_string, float p_frame_begin = 0, float p_frame_end = 0, int p_frame_count = 1, float p_scale = 1, int p_rows = -1);
+	static Ref<LottieTexture2D> create_from_json(Ref<JSON> p_json, float p_frame_begin = 0, float p_frame_end = 0, int p_frame_count = 1, float p_scale = 1, int p_rows = -1);
+
+	void update(Ref<JSON> p_json, float p_frame_begin, float p_frame_end, int p_frame_count, float p_scale, int p_rows);
 
 	void set_json(Ref<JSON> p_json);
 	Ref<JSON> get_json() { return json; };
@@ -85,6 +87,11 @@ public:
 
 	float get_lottie_duration() { return animation->duration(); };
 	float get_lottie_frame_count() { return animation->totalFrame(); };
+	Size2 get_lottie_image_size() {
+		float w, h;
+		picture->size(&w, &h);
+		return Size2(w, h);
+	}
 
 	int get_width() const override { return image.is_valid() ? image->get_width() : 0; };
 	int get_height() const override { return image.is_valid() ? image->get_height() : 0; };
@@ -103,6 +110,13 @@ public:
 	virtual void get_recognized_extensions(List<String> *p_extensions) const override;
 	virtual bool handles_type(const String &p_type) const override;
 	virtual String get_resource_type(const String &p_path) const override;
+};
+
+class ResourceFormatSaverLottie : public ResourceFormatSaver {
+public:
+	virtual Error save(const Ref<Resource> &p_resource, const String &p_path, uint32_t p_flags = 0) override;
+	virtual void get_recognized_extensions(const Ref<Resource> &p_resource, List<String> *p_extensions) const override;
+	virtual bool recognize(const Ref<Resource> &p_resource) const override;
 };
 
 #endif // LOTTIE_TEXTURE_H

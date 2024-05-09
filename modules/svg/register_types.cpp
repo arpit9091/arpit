@@ -43,6 +43,7 @@
 
 static Ref<ImageLoaderSVG> image_loader_svg;
 static Ref<ResourceFormatLoaderLottie> resource_loader_lottie;
+static Ref<ResourceFormatSaverLottie> resource_saver_lottie;
 
 void initialize_svg_module(ModuleInitializationLevel p_level) {
 	if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
@@ -58,8 +59,10 @@ void initialize_svg_module(ModuleInitializationLevel p_level) {
 	image_loader_svg.instantiate();
 	ImageLoader::add_image_format_loader(image_loader_svg);
 	resource_loader_lottie.instantiate();
-	// should be at the front of JSON loader.
+	resource_saver_lottie.instantiate();
+	// Lottie loader should be at the front of JSON loader.
 	ResourceLoader::add_resource_format_loader(resource_loader_lottie, true);
+	ResourceSaver::add_resource_format_saver(resource_saver_lottie);
 	ClassDB::register_class<LottieTexture2D>();
 }
 
@@ -76,6 +79,8 @@ void uninitialize_svg_module(ModuleInitializationLevel p_level) {
 	ImageLoader::remove_image_format_loader(image_loader_svg);
 	image_loader_svg.unref();
 	ResourceLoader::remove_resource_format_loader(resource_loader_lottie);
+	ResourceSaver::remove_resource_format_saver(resource_saver_lottie);
 	resource_loader_lottie.unref();
+	resource_saver_lottie.unref();
 	tvg::Initializer::term(tvg::CanvasEngine::Sw);
 }
