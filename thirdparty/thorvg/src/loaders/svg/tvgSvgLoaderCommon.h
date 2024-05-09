@@ -560,7 +560,6 @@ struct SvgLoaderData
     int level = 0;
     bool result = false;
     bool style = false;
-    SvgNode* currentGraphicsNode = nullptr;
 };
 
 struct Box

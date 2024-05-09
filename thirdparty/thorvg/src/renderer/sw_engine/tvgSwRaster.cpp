@@ -1755,13 +1755,8 @@ static bool _rasterRadialGradientRle(SwSurface* surface, const SwRleData* rle, c
 
 void rasterGrayscale8(uint8_t *dst, uint8_t val, uint32_t offset, int32_t len)
 {
-#if defined(THORVG_AVX_VECTOR_SUPPORT)
-    avxRasterGrayscale8(dst, val, offset, len);
-#elif defined(THORVG_NEON_VECTOR_SUPPORT)
-    neonRasterGrayscale8(dst, val, offset, len);
-#else
+    //OPTIMIZE_ME: Support SIMD
     cRasterPixels(dst, val, offset, len);
-#endif
 }
 
 

@@ -115,8 +115,8 @@ Fill* LottieGradient::fill(float frameNo)
             P(static_cast<RadialGradient*>(fill))->radial(sx, sy, r, sx, sy, 0.0f);
         } else {
             if (mathEqual(progress, 1.0f)) progress = 0.99f;
-            auto startAngle = mathRad2Deg(atan2(ey - sy, ex - sx));
-            auto angle = mathDeg2Rad((startAngle + this->angle(frameNo)));
+            auto startAngle = atan2(ey - sy, ex - sx) * 180.0f / MATH_PI;
+            auto angle = (startAngle + this->angle(frameNo)) * (MATH_PI / 180.0f);
             auto fx = sx + cos(angle) * progress * r;
             auto fy = sy + sin(angle) * progress * r;
             // Lottie dosen't have any focal radius concept
@@ -142,20 +142,20 @@ void LottieGroup::prepare(LottieObject::Type type)
     size_t fillCnt = 0;
 
     for (auto c = children.end() - 1; c >= children.begin(); --c) {
-        auto child = static_cast<LottieObject*>(*c);
+        if (!mergeable && reqFragment) break;
 
-        if (child->type == LottieObject::Type::Trimpath) trimpath = true;
+        auto child = static_cast<LottieObject*>(*c);
 
         /* Figure out if this group is a simple path drawing.
            In that case, the rendering context can be sharable with the parent's. */
-        if (allowMerge && (child->type == LottieObject::Group || !child->mergeable())) allowMerge = false;
+        if (mergeable && !child->mergeable()) mergeable = false;
 
         if (reqFragment) continue;
 
         /* Figure out if the rendering context should be fragmented.
            Multiple stroking or grouping with a stroking would occur this.
            This fragment resolves the overlapped stroke outlines. */
-        if (child->type == LottieObject::Group && !child->mergeable()) {
+        if (child->type == LottieObject::Group && !static_cast<LottieGroup*>(child)->mergeable) {
             if (strokeCnt > 0 || fillCnt > 0) reqFragment = true;
         } else if (child->type == LottieObject::SolidStroke || child->type == LottieObject::GradientStroke) {
             if (strokeCnt > 0) reqFragment = true;
@@ -164,25 +164,6 @@ void LottieGroup::prepare(LottieObject::Type type)
             if (fillCnt > 0) reqFragment = true;
             else ++fillCnt;
         }
-    }
-
-    //Reverse the drawing order if this group has a trimpath.
-    if (!trimpath) return;
-
-    for (uint32_t i = 0; i < children.count - 1; ) {
-        auto child2 = children[i + 1];
-        if (!child2->mergeable() || child2->type == LottieObject::Transform) {
-            i += 2;
-            continue;
-        }
-        auto child = children[i];
-        if (!child->mergeable() || child->type == LottieObject::Transform) {
-            i++;
-            continue;
-        }
-        children[i] = child2;
-        children[i + 1] = child;
-        i++;
     }
 }
 
@@ -254,9 +235,5 @@ LottieComposition::~LottieComposition()
     //delete slots
     for (auto s = slots.begin(); s < slots.end(); ++s) {
         delete(*s);
-    }
-    
-    for (auto m = markers.begin(); m < markers.end(); ++m) {
-        delete(*m);
     }
 }

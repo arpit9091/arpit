@@ -21,7 +21,6 @@
  */
 
 #include "config.h"
-#include <cmath>
 #include <cstring>
 #include <memory.h>
 #include "tvgMath.h"
@@ -198,8 +197,6 @@ float strToFloat(const char *nPtr, char **endPtr)
 
 success:
     if (endPtr) *endPtr = (char *)(a);
-    if (!std::isfinite(val)) return 0.0f;
-
     return minus * val;
 
 error:

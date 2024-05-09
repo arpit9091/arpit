@@ -157,17 +157,14 @@ Result Saver::save(unique_ptr<Animation> animation, const string& path, uint32_t
     auto a = animation.release();
     if (!a) return Result::MemoryCorruption;
 
-    //animation holds the picture, it must be 1 at the bottom.
-    auto remove = PP(a->picture())->refCnt <= 1 ? true : false;
-
     if (mathZero(a->totalFrame())) {
-        if (remove) delete(a);
+        delete(a);
         return Result::InsufficientCondition;
     }
 
     //Already on saving an other resource.
     if (pImpl->saveModule) {
-        if (remove) delete(a);
+        delete(a);
         return Result::InsufficientCondition;
     }
 
@@ -176,12 +173,12 @@ Result Saver::save(unique_ptr<Animation> animation, const string& path, uint32_t
             pImpl->saveModule = saveModule;
             return Result::Success;
         } else {
-            if (remove) delete(a);
+            delete(a);
             delete(saveModule);
             return Result::Unknown;
         }
     }
-    if (remove) delete(a);
+    delete(a);
     return Result::NonSupport;
 }
 

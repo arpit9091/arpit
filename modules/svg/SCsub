@@ -12,8 +12,8 @@ thirdparty_obj = []
 thirdparty_dir = "#thirdparty/thorvg/"
 thirdparty_sources = [
     # common
+    "src/common/tvgBezier.cpp",
     "src/common/tvgCompressor.cpp",
-    "src/common/tvgLines.cpp",
     "src/common/tvgMath.cpp",
     "src/common/tvgStr.cpp",
     # SVG parser

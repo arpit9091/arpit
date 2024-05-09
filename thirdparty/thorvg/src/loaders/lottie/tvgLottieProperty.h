@@ -26,7 +26,7 @@
 #include "tvgCommon.h"
 #include "tvgArray.h"
 #include "tvgMath.h"
-#include "tvgLines.h"
+#include "tvgBezier.h"
 #include "tvgLottieInterpolator.h"
 
 struct PathSet

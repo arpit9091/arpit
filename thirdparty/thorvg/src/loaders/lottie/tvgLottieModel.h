@@ -175,17 +175,6 @@ struct LottieFont
     Origin origin = Embedded;
 };
 
-struct LottieMarker
-{
-    char* name = nullptr;
-    float time = 0.0f;
-    float duration = 0.0f;
-    
-    ~LottieMarker()
-    {
-        free(name);
-    }
-};
 
 struct LottieText : LottieObject
 {
@@ -400,7 +389,6 @@ struct LottieGradient : LottieObject
         Array<Fill::ColorStop> output(colorStops.count + alphaCnt);
         uint32_t cidx = 0;               //color count
         uint32_t clast = colorStops.count * 4;
-        if (clast > color.input->count) clast = color.input->count;
         uint32_t aidx = clast;           //alpha count
         Fill::ColorStop cs;
 
@@ -442,7 +430,7 @@ struct LottieGradient : LottieObject
         }
 
         //color remains
-        while (cidx + 3 < clast) {
+        while (cidx < clast) {
             cs.offset = (*color.input)[cidx];
             cs.r = lroundf((*color.input)[cidx + 1] * 255.0f);
             cs.g = lroundf((*color.input)[cidx + 2] * 255.0f);
@@ -584,15 +572,13 @@ struct LottieGroup : LottieObject
     }
 
     void prepare(LottieObject::Type type = LottieObject::Group);
-    bool mergeable() override { return allowMerge; }
 
     Scene* scene = nullptr;               //tvg render data
     Array<LottieObject*> children;
 
     bool reqFragment = false;   //requirment to fragment the render context
     bool buildDone = false;     //completed in building the composition.
-    bool allowMerge = true;     //if this group is consisted of simple (transformed) shapes.
-    bool trimpath = false;      //this group has a trimpath.
+    bool mergeable = true;     //if this group is consisted of simple (transformed) shapes.
 };
 
 
@@ -608,8 +594,6 @@ struct LottieLayer : LottieGroup
         if (type == Null) return 255;
         return transform->opacity(frameNo);
     }
-
-    bool mergeable() override { return false; }
 
     void prepare();
     float remap(float frameNo);
@@ -628,7 +612,7 @@ struct LottieLayer : LottieGroup
     RGB24 color;  //used by Solid layer
 
     float timeStretch = 1.0f;
-    float w = 0.0f, h = 0.0f;
+    uint32_t w = 0, h = 0;
     float inFrame = 0.0f;
     float outFrame = 0.0f;
     float startFrame = 0.0f;
@@ -769,14 +753,13 @@ struct LottieComposition
     LottieLayer* root = nullptr;
     char* version = nullptr;
     char* name = nullptr;
-    float w, h;
+    uint32_t w, h;
     float startFrame, endFrame;
     float frameRate;
     Array<LottieObject*> assets;
     Array<LottieInterpolator*> interpolators;
     Array<LottieFont*> fonts;
     Array<LottieSlot*> slots;
-    Array<LottieMarker*> markers;
     bool initiated = false;
 };
 

@@ -104,7 +104,7 @@ static Shape* _draw(LottieGroup* parent, RenderContext* ctx);
 static void _rotateX(Matrix* m, float degree)
 {
     if (degree == 0.0f) return;
-    auto radian = mathDeg2Rad(degree);
+    auto radian = degree / 180.0f * MATH_PI;
     m->e22 *= cosf(radian);
 }
 
@@ -112,7 +112,7 @@ static void _rotateX(Matrix* m, float degree)
 static void _rotateY(Matrix* m, float degree)
 {
     if (degree == 0.0f) return;
-    auto radian = mathDeg2Rad(degree);
+    auto radian = degree / 180.0f * MATH_PI;
     m->e11 *= cosf(radian);
 }
 
@@ -120,7 +120,7 @@ static void _rotateY(Matrix* m, float degree)
 static void _rotationZ(Matrix* m, float degree)
 {
     if (degree == 0.0f) return;
-    auto radian = mathDeg2Rad(degree);
+    auto radian = degree / 180.0f * MATH_PI;
     m->e11 = cosf(radian);
     m->e12 = -sinf(radian);
     m->e21 = sinf(radian);
@@ -198,7 +198,7 @@ static void _updateTransform(LottieGroup* parent, LottieObject** child, float fr
 
     uint8_t opacity;
 
-    if (parent->mergeable()) {
+    if (parent->mergeable) {
         if (!ctx->transform) ctx->transform = (Matrix*)malloc(sizeof(Matrix));
         _updateTransform(transform, frameNo, false, *ctx->transform, opacity);
         return;
@@ -232,10 +232,10 @@ static void _updateGroup(LottieGroup* parent, LottieObject** child, float frameN
     group->reqFragment |= ctx->reqFragment;
 
     //generate a merging shape to consolidate partial shapes into a single entity
-    if (group->mergeable()) _draw(parent, ctx);
+    if (group->mergeable) _draw(parent, ctx);
 
     Inlist<RenderContext> contexts;
-    contexts.back(new RenderContext(*ctx, group->mergeable()));
+    contexts.back(new RenderContext(*ctx, group->mergeable));
 
     _updateChildren(group, frameNo, contexts);
 
@@ -546,36 +546,9 @@ static void _updateText(LottieGroup* parent, LottieObject** child, float frameNo
     float spacing = text->spacing(frameNo) / scale;
     Point cursor = {0.0f, 0.0f};
     auto scene = Scene::gen();
-    int line = 0;
 
     //text string
-    while (true) {
-        //TODO: remove nested scenes.
-        //end of text, new line of the cursor position
-        if (*p == 13 || *p == 3 || *p == '\0') {
-            //text layout position
-            auto ascent = text->font->ascent * scale;
-            if (ascent > doc.bbox.size.y) ascent = doc.bbox.size.y;
-            Point layout = {doc.bbox.pos.x, doc.bbox.pos.y + ascent - doc.shift};
-
-            //adjust the layout
-            if (doc.justify == 1) layout.x += doc.bbox.size.x - (cursor.x * scale);  //right aligned
-            else if (doc.justify == 2) layout.x += (doc.bbox.size.x * 0.5f) - (cursor.x * 0.5f * scale);  //center aligned
-
-            scene->translate(layout.x, layout.y);
-            scene->scale(scale);
-
-            parent->scene->push(std::move(scene));
-
-            if (*p == '\0') break;
-            ++p;
-
-            //new text group, single scene for each line
-            scene = Scene::gen();
-            cursor.x = 0.0f;
-            cursor.y = ++line * (doc.height / scale);
-        }
-        
+    while (*p != '\0') {
         //find the glyph
         for (auto g = text->font->chars.begin(); g < text->font->chars.end(); ++g) {
             auto glyph = *g;
@@ -604,12 +577,33 @@ static void _updateText(LottieGroup* parent, LottieObject** child, float frameNo
 
                 p += glyph->len; 
 
+                //end of text, new line of the cursor position
+                if (*p == 13 || *p == 3) {
+                    cursor.x = 0.0f;
+                    cursor.y += (doc.height / scale);
+                    ++p;
                 //advance the cursor position horizontally
-                cursor.x += glyph->width + spacing;
+                } else {
+                    cursor.x += glyph->width + spacing;
+                }
                 break;
             }
         }
     }
+
+    //text layout position
+    auto ascent = text->font->ascent * scale;
+    if (ascent > doc.bbox.size.y) ascent = doc.bbox.size.y;
+    Point layout = {doc.bbox.pos.x, doc.bbox.pos.y + ascent - doc.shift};
+
+    //adjust the layout
+    if (doc.justify == 1) layout.x += doc.bbox.size.x - (cursor.x * scale);  //right aligned
+    else if (doc.justify == 2) layout.x += (doc.bbox.size.x * 0.5f) - (cursor.x * 0.5f * scale);  //center aligned
+
+    scene->translate(layout.x, layout.y);
+    scene->scale(scale);
+
+    parent->scene->push(std::move(scene));
 }
 
 
@@ -623,7 +617,7 @@ static void _updateStar(LottieGroup* parent, LottiePolyStar* star, Matrix* trans
     auto innerRoundness = star->innerRoundness(frameNo) * 0.01f;
     auto outerRoundness = star->outerRoundness(frameNo) * 0.01f;
 
-    auto angle = mathDeg2Rad(-90.0f);
+    auto angle = -90.0f * MATH_PI / 180.0f;
     auto partialPointRadius = 0.0f;
     auto anglePerPoint = (2.0f * MATH_PI / ptsCnt);
     auto halfAnglePerPoint = anglePerPoint * 0.5f;
@@ -730,7 +724,7 @@ static void _updatePolygon(LottieGroup* parent, LottiePolyStar* star, Matrix* tr
     auto radius = star->outerRadius(frameNo);
     auto roundness = star->outerRoundness(frameNo) * 0.01f;
 
-    auto angle = mathDeg2Rad(-90.0f);
+    auto angle = -90.0f * MATH_PI / 180.0f;
     auto anglePerPoint = 2.0f * MATH_PI / float(ptsCnt);
     auto direction = (star->direction == 0) ? 1.0f : -1.0f;
     auto hasRoundness = false;
@@ -903,7 +897,9 @@ static void _updateTrimpath(TVG_UNUSED LottieGroup* parent, LottieObject** child
         end = (length * end) + pbegin;
     }
 
-    P(ctx->propagator)->strokeTrim(begin, end, trimpath->type == LottieTrimpath::Type::Individual ? true : false);
+    P(ctx->propagator)->strokeTrim(begin, end);
+
+    //TODO: individual or simultaenous mode
 }
 
 
