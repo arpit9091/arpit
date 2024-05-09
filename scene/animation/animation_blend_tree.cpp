@@ -89,6 +89,11 @@ void AnimationNodeAnimation::_validate_property(PropertyInfo &p_property) const 
 	}
 }
 
+void AnimationNodeAnimation::_get_property_list(List<PropertyInfo> *p_list) const {
+	// Exists just to make it easier to insert button after the custom timeline properties.
+	p_list->push_back(PropertyInfo(Variant::NIL, "custom_timeline_button_slot", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_EDITOR));
+}
+
 AnimationNode::NodeTimeInfo AnimationNodeAnimation::process(const AnimationMixer::PlaybackInfo p_playback_info, bool p_test_only) {
 	process_state->is_testing = p_test_only;
 
@@ -237,7 +242,7 @@ AnimationNode::NodeTimeInfo AnimationNodeAnimation::_process(const AnimationMixe
 		// We should use call_deferred since the track keys are still being processed.
 		if (process_state->tree && !p_test_only) {
 			// AnimationTree uses seek to 0 "internally" to process the first key of the animation, which is used as the start detection.
-			if (p_seek && !p_is_external_seeking && cur_playback_time == 0) {
+			if (p_seek && !p_is_external_seeking && cur_playback_time <= 0) {
 				process_state->tree->call_deferred(SNAME("emit_signal"), "animation_started", animation);
 			}
 			// Finished.
