@@ -45,7 +45,7 @@ class LottieTexture2D : public Texture2D {
 	Ref<Image> image;
 	mutable RID texture;
 	uint32_t *buffer = nullptr;
-	Ref<JSON> json;
+	Ref<JSON> json = nullptr;
 
 	float scale = 1.0;
 	float origin_width = -1, origin_height = -1;

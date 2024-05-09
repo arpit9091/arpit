@@ -36,6 +36,9 @@
 #include <thorvg.h>
 
 void LottieTexture2D::_load_lottie_json() {
+	if (json.is_null()) {
+		return;
+	}
 	String lottie_str = json->get_parsed_text();
 	if (lottie_str.is_empty()) {
 		// don't sort keys, otherwise ThorVG can't load it
@@ -262,9 +265,11 @@ Ref<Resource> ResourceFormatLoaderLottie::load(const String &p_path, const Strin
 		*r_error = ERR_FILE_CANT_OPEN;
 	}
 
+	Ref<Resource> ret = Ref<Resource>();
+
 	if (!FileAccess::exists(p_path)) {
 		*r_error = ERR_FILE_NOT_FOUND;
-		return Ref<Resource>();
+		return ret;
 	}
 
 	Ref<JSON> json;
@@ -277,17 +282,25 @@ Ref<Resource> ResourceFormatLoaderLottie::load(const String &p_path, const Strin
 			*r_error = err;
 		}
 		ERR_PRINT(err_text);
-		return Ref<Resource>();
+		return ret;
 	}
 
-	Dictionary dict = json->get_data();
-	float p_scale = dict.get("gd_scale", 1.0);
-	float p_frame_begin = dict.get("gd_frame_begin", 0);
-	float p_frame_end = dict.get("gd_frame_end", 0);
-	int p_frame_count = dict.get("gd_frame_count", 1);
-	int p_rows = dict.get("gd_rows", -1);
+	if (get_resource_type(p_path) == "LottieTexture2D") {
+		Dictionary dict = json->get_data();
+		float p_scale = dict.get("gd_scale", 1.0);
+		float p_frame_begin = dict.get("gd_frame_begin", 0);
+		float p_frame_end = dict.get("gd_frame_end", 0);
+		int p_frame_count = dict.get("gd_frame_count", 1);
+		int p_rows = dict.get("gd_rows", -1);
 
-	Ref<LottieTexture2D> ret = LottieTexture2D::create_from_json(json, p_frame_begin, p_frame_end, p_frame_count, p_scale, p_rows);
+		ret = LottieTexture2D::create_from_json(json, p_frame_begin, p_frame_end, p_frame_count, p_scale, p_rows);
+	} else {
+		if (r_error) {
+			*r_error = ERR_INVALID_DATA;
+		}
+		WARN_PRINT(vformat("The file %s is not a valid Lottie.", p_path));
+		return ret;
+	}
 
 	if (r_error) {
 		*r_error = OK;
@@ -312,7 +325,7 @@ String ResourceFormatLoaderLottie::get_resource_type(const String &p_path) const
 		// use ThorVG to check if it's Lottie file.
 		tvg::Result res = picture->load(str.utf8(), str.utf8().size(), "lottie", false);
 		if (res != tvg::Result::Success) {
-			return "JSON";
+			return "";
 		}
 		return "LottieTexture2D";
 	}
@@ -326,7 +339,7 @@ Error ResourceFormatSaverLottie::save(const Ref<Resource> &p_resource, const Str
 	ERR_FAIL_COND_V(lottie.is_null(), ERR_INVALID_PARAMETER);
 
 	// Lottie JSON objects allows storing additional data
-	Dictionary dict = lottie->get_json()->get_data();
+	Dictionary dict = lottie->get_json().is_valid() ? (Dictionary)lottie->get_json()->get_data() : Dictionary();
 	dict["gd_scale"] = lottie->get_scale();
 	dict["gd_frame_begin"] = lottie->get_frame_begin();
 	dict["gd_frame_end"] = lottie->get_frame_end();
