@@ -42,9 +42,7 @@ class LottieTexture2D : public Texture2D {
 	std::unique_ptr<tvg::SwCanvas> sw_canvas = tvg::SwCanvas::gen();
 	std::unique_ptr<tvg::Animation> animation = tvg::Animation::gen();
 	tvg::Picture *picture = animation->picture();
-	Ref<Image> image;
 	mutable RID texture;
-	uint32_t *buffer = nullptr;
 	Ref<JSON> json = nullptr;
 
 	float scale = 1.0;
@@ -93,12 +91,24 @@ public:
 		return Size2(w, h);
 	}
 
-	int get_width() const override { return image.is_valid() ? image->get_width() : 0; };
-	int get_height() const override { return image.is_valid() ? image->get_height() : 0; };
-	Size2 get_size() const override { return image.is_valid() ? image->get_size() : Size2i(); };
-	virtual bool is_pixel_opaque(int p_x, int p_y) const override { return image.is_valid() ? image->get_pixel(p_x, p_y).a > 0.1 : true; };
+	int get_width() const override {
+		Ref<Image> image = get_image();
+		return image.is_valid() ? image->get_width() : 0;
+	};
+	int get_height() const override {
+		Ref<Image> image = get_image();
+		return image.is_valid() ? image->get_height() : 0;
+	};
+	Size2 get_size() const override {
+		Ref<Image> image = get_image();
+		return image.is_valid() ? image->get_size() : Size2i();
+	};
+	virtual bool is_pixel_opaque(int p_x, int p_y) const override {
+		Ref<Image> image = get_image();
+		return image.is_valid() ? image->get_pixel(p_x, p_y).a > 0.1 : true;
+	};
 	virtual bool has_alpha() const override { return true; };
-	virtual Ref<Image> get_image() const override { return image; };
+	virtual Ref<Image> get_image() const override { return texture.is_valid() ? RenderingServer::get_singleton()->texture_2d_get(texture) : Ref<Image>(); };
 	virtual RID get_rid() const override;
 
 	~LottieTexture2D();

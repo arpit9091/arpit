@@ -82,8 +82,19 @@ void LottieTexture2D::_update_image() {
 	}
 	picture->size(w, h);
 
-	image = Image::create_empty(w * _columns, h * _rows, false, Image::FORMAT_RGBA8);
-	buffer = (uint32_t *)(buffer == nullptr ? memalloc(sizeof(uint32_t) * w * h) : memrealloc(buffer, sizeof(uint32_t) * w * h));
+	Ref<Image> image = Image::create_empty(w * _columns, h * _rows, false, Image::FORMAT_RGBA8);
+	uint32_t *buffer = (uint32_t *)memalloc(sizeof(uint32_t) * w * h);
+
+	tvg::Result res = sw_canvas->target(buffer, w, w, h, tvg::SwCanvas::ARGB8888S);
+	if (res != tvg::Result::Success) {
+		memfree(buffer);
+		ERR_FAIL_MSG("LottieTexture2D: Couldn't set target on ThorVG canvas.");
+	}
+	res = sw_canvas->push(tvg::cast(picture));
+	if (res != tvg::Result::Success) {
+		memfree(buffer);
+		ERR_FAIL_MSG("LottieTexture2D: Couldn't insert ThorVG picture on canvas.");
+	}
 
 	for (int row = 0; row < _rows; row++) {
 		for (int column = 0; column < _columns; column++) {
@@ -93,31 +104,22 @@ void LottieTexture2D::_update_image() {
 			float progress = ((float)(row * _columns + column)) / frame_count;
 			float current_frame = frame_begin + (frame_end - frame_begin) * progress;
 
-			tvg::Result res = animation->frame(current_frame);
-			if (res == tvg::Result::Success) {
+			res = animation->frame(current_frame);
+			if (progress == 0 || res == tvg::Result::Success) {
 				sw_canvas->update(picture);
-			}
-			res = sw_canvas->target(buffer, w, w, h, tvg::SwCanvas::ARGB8888S);
-			if (res != tvg::Result::Success) {
-				ERR_FAIL_MSG("LottieTexture2D: Couldn't set target on ThorVG canvas.");
-			}
-
-			res = sw_canvas->push(tvg::cast(picture));
-			if (res != tvg::Result::Success) {
-				ERR_FAIL_MSG("LottieTexture2D: Couldn't insert ThorVG picture on canvas.");
 			}
 
 			res = sw_canvas->draw();
 			if (res != tvg::Result::Success) {
+				memfree(buffer);
 				ERR_FAIL_MSG("LottieTexture2D: Couldn't draw ThorVG pictures on canvas.");
 			}
 
 			res = sw_canvas->sync();
 			if (res != tvg::Result::Success) {
+				memfree(buffer);
 				ERR_FAIL_MSG("LottieTexture2D: Couldn't sync ThorVG canvas.");
 			}
-
-			res = sw_canvas->clear(true);
 
 			for (uint32_t y = 0; y < h; y++) {
 				for (uint32_t x = 0; x < w; x++) {
@@ -130,8 +132,12 @@ void LottieTexture2D::_update_image() {
 					image->set_pixel(x + w * column, y + h * row, color);
 				}
 			}
+			res = sw_canvas->clear(false);
 		}
 	}
+	memfree(buffer);
+	sw_canvas->clear(true);
+
 	if (texture.is_null()) {
 		texture = RenderingServer::get_singleton()->texture_2d_create(image);
 	} else {
@@ -224,9 +230,6 @@ RID LottieTexture2D::get_rid() const {
 LottieTexture2D::~LottieTexture2D() {
 	if (texture.is_valid()) {
 		RenderingServer::get_singleton()->free(texture);
-	}
-	if (buffer) {
-		memfree(buffer);
 	}
 }
 
