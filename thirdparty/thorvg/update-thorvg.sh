@@ -38,6 +38,7 @@ cat << EOF > ../inc/config.h
 #define THORVG_SVG_LOADER_SUPPORT
 #define THORVG_PNG_LOADER_SUPPORT
 #define THORVG_JPG_LOADER_SUPPORT
+#define THORVG_LOTTIE_LOADER_SUPPORT
 #define THORVG_THREAD_SUPPORT
 
 // For internal debugging:
@@ -55,11 +56,12 @@ cp -rv src/renderer ../src/
 rm -rfv ../src/renderer/gl_engine
 rm -rfv ../src/renderer/wg_engine
 
-# Enabled embedded loaders: raw, JPEG, PNG.
+# Enabled embedded loaders: raw, JPEG, PNG, Lottie.
 mkdir ../src/loaders
 cp -rv src/loaders/svg src/loaders/raw  ../src/loaders/
 cp -rv src/loaders/jpg  ../src/loaders/
 cp -rv src/loaders/png src/loaders/external_png  ../src/loaders/
+cp -rv src/loaders/lottie  ../src/loaders/
 
 popd
 rm -rf tmp
