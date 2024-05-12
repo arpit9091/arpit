@@ -50,7 +50,6 @@ protected:
 
 	void _notification(int p_what);
 
-	virtual void _on_openxr_session_begun() override;
 	virtual Ref<Mesh> _create_fallback_mesh() override;
 
 public:
@@ -65,6 +64,8 @@ public:
 
 	void set_fallback_segments(uint32_t p_fallback_segments);
 	uint32_t get_fallback_segments() const;
+
+	virtual Vector2 intersects_ray(const Vector3 &p_origin, const Vector3 &p_direction) const override;
 
 	OpenXRCompositionLayerCylinder();
 	~OpenXRCompositionLayerCylinder();

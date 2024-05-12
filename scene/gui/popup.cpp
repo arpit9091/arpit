@@ -77,6 +77,9 @@ void Popup::_notification(int p_what) {
 					_initialize_visible_parents();
 				} else {
 					_deinitialize_visible_parents();
+					if (hide_reason == HIDE_REASON_NONE) {
+						hide_reason = HIDE_REASON_CANCELED;
+					}
 					emit_signal(SNAME("popup_hide"));
 					popped_up = false;
 				}
@@ -87,6 +90,7 @@ void Popup::_notification(int p_what) {
 			if (!is_in_edited_scene_root()) {
 				if (has_focus()) {
 					popped_up = true;
+					hide_reason = HIDE_REASON_NONE;
 				}
 			}
 		} break;
@@ -100,6 +104,7 @@ void Popup::_notification(int p_what) {
 
 		case NOTIFICATION_WM_CLOSE_REQUEST: {
 			if (!is_in_edited_scene_root()) {
+				hide_reason = HIDE_REASON_UNFOCUSED;
 				_close_pressed();
 			}
 		} break;
@@ -114,6 +119,7 @@ void Popup::_notification(int p_what) {
 
 void Popup::_parent_focused() {
 	if (popped_up && get_flag(FLAG_POPUP)) {
+		hide_reason = HIDE_REASON_UNFOCUSED;
 		_close_pressed();
 	}
 }
@@ -194,8 +200,6 @@ Rect2i Popup::_popup_adjust_rect() const {
 
 void Popup::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("popup_hide"));
-
-	BIND_THEME_ITEM_CUSTOM(Theme::DATA_TYPE_STYLEBOX, Popup, panel_style, "panel");
 }
 
 Popup::Popup() {
@@ -232,7 +236,8 @@ Size2 PopupPanel::_get_contents_minimum_size() const {
 
 void PopupPanel::_update_child_rects() {
 	Vector2 cpos(theme_cache.panel_style->get_offset());
-	Vector2 csize(get_size() - theme_cache.panel_style->get_minimum_size());
+	Vector2 panel_size = Vector2(get_size()) / get_content_scale_factor();
+	Vector2 csize = panel_size - theme_cache.panel_style->get_minimum_size();
 
 	for (int i = 0; i < get_child_count(); i++) {
 		Control *c = Object::cast_to<Control>(get_child(i));
@@ -246,7 +251,7 @@ void PopupPanel::_update_child_rects() {
 
 		if (c == panel) {
 			c->set_position(Vector2());
-			c->set_size(get_size());
+			c->set_size(panel_size);
 		} else {
 			c->set_position(cpos);
 			c->set_size(csize);

@@ -47,12 +47,13 @@ protected:
 
 	void _notification(int p_what);
 
-	virtual void _on_openxr_session_begun() override;
 	virtual Ref<Mesh> _create_fallback_mesh() override;
 
 public:
 	void set_quad_size(const Size2 &p_size);
 	Size2 get_quad_size() const;
+
+	virtual Vector2 intersects_ray(const Vector3 &p_origin, const Vector3 &p_direction) const override;
 
 	OpenXRCompositionLayerQuad();
 	~OpenXRCompositionLayerQuad();

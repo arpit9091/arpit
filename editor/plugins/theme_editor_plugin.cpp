@@ -106,7 +106,7 @@ void ThemeItemImportTree::_update_items_tree() {
 		type_node->set_checked(IMPORT_ITEM_DATA, false);
 		type_node->set_editable(IMPORT_ITEM_DATA, true);
 
-		bool is_matching_filter = (filter_text.is_empty() || type_name.findn(filter_text) > -1);
+		bool is_matching_filter = (filter_text.is_empty() || type_name.containsn(filter_text));
 		bool has_filtered_items = false;
 
 		for (int i = 0; i < Theme::DATA_TYPE_MAX; i++) {
@@ -120,7 +120,7 @@ void ThemeItemImportTree::_update_items_tree() {
 
 			for (const StringName &F : names) {
 				String item_name = (String)F;
-				bool is_item_matching_filter = (item_name.findn(filter_text) > -1);
+				bool is_item_matching_filter = item_name.containsn(filter_text);
 				if (!filter_text.is_empty() && !is_matching_filter && !is_item_matching_filter) {
 					continue;
 				}
@@ -2267,7 +2267,9 @@ ThemeTypeDialog::ThemeTypeDialog() {
 ///////////////////////
 
 Control *ThemeItemLabel::make_custom_tooltip(const String &p_text) const {
-	return memnew(EditorHelpTooltip(p_text));
+	EditorHelpBit *help_bit = memnew(EditorHelpBit(p_text));
+	EditorHelpBitTooltip::show_tooltip(help_bit, const_cast<ThemeItemLabel *>(this));
+	return memnew(Control); // Make the standard tooltip invisible.
 }
 
 VBoxContainer *ThemeTypeEditor::_create_item_list(Theme::DataType p_data_type) {
@@ -2384,9 +2386,25 @@ HashMap<StringName, bool> ThemeTypeEditor::_get_type_items(String p_type_name, T
 
 	if (p_include_default) {
 		names.clear();
-		String default_type = p_type_name;
-		if (edited_theme->get_type_variation_base(p_type_name) != StringName()) {
-			default_type = edited_theme->get_type_variation_base(p_type_name);
+		String default_type;
+
+		{
+			const StringName variation_base = edited_theme->get_type_variation_base(p_type_name);
+			if (variation_base != StringName()) {
+				default_type = variation_base;
+			}
+		}
+
+		if (default_type.is_empty()) {
+			// If variation base was not found in the edited theme, look in the default theme.
+			const StringName variation_base = ThemeDB::get_singleton()->get_default_theme()->get_type_variation_base(p_type_name);
+			if (variation_base != StringName()) {
+				default_type = variation_base;
+			}
+		}
+
+		if (default_type.is_empty()) {
+			default_type = p_type_name;
 		}
 
 		List<ThemeDB::ThemeItemBind> theme_binds;
@@ -2436,8 +2454,8 @@ HBoxContainer *ThemeTypeEditor::_create_property_control(Theme::DataType p_data_
 	item_name->set_h_size_flags(SIZE_EXPAND_FILL);
 	item_name->set_clip_text(true);
 	item_name->set_text(p_item_name);
-	// `|` separators used in `EditorHelpTooltip` for formatting.
-	item_name->set_tooltip_text("theme_item|" + edited_type + "|" + p_item_name + "|");
+	// `|` separators used in `EditorHelpBit`.
+	item_name->set_tooltip_text("theme_item|" + edited_type + "|" + p_item_name);
 	item_name->set_mouse_filter(Control::MOUSE_FILTER_STOP);
 	item_name_container->add_child(item_name);
 

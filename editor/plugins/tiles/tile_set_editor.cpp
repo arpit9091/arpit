@@ -357,7 +357,10 @@ void TileSetEditor::_set_source_sort(int p_sort) {
 		}
 	}
 	_update_sources_list(old_selected);
-	EditorSettings::get_singleton()->set_project_metadata("editor_metadata", "tile_source_sort", p_sort);
+
+	if (!first_edit) {
+		EditorSettings::get_singleton()->set_project_metadata("editor_metadata", "tile_source_sort", p_sort);
+	}
 }
 
 void TileSetEditor::_notification(int p_what) {
@@ -738,8 +741,8 @@ void TileSetEditor::edit(Ref<TileSet> p_tile_set) {
 
 		tile_set->connect_changed(callable_mp(this, &TileSetEditor::_tile_set_changed));
 		if (first_edit) {
-			first_edit = false;
 			_set_source_sort(EditorSettings::get_singleton()->get_project_metadata("editor_metadata", "tile_source_sort", 0));
+			first_edit = false;
 		} else {
 			_update_sources_list();
 		}
@@ -881,7 +884,9 @@ TileSetEditor::TileSetEditor() {
 	sources_add_button->set_flat(false);
 	sources_add_button->set_theme_type_variation("FlatButton");
 	sources_add_button->get_popup()->add_item(TTR("Atlas"));
+	sources_add_button->get_popup()->set_item_tooltip(-1, TTR("A palette of tiles made from a texture."));
 	sources_add_button->get_popup()->add_item(TTR("Scenes Collection"));
+	sources_add_button->get_popup()->set_item_tooltip(-1, TTR("A collection of scenes that can be instantiated and placed as tiles."));
 	sources_add_button->get_popup()->connect("id_pressed", callable_mp(this, &TileSetEditor::_source_add_id_pressed));
 	sources_bottom_actions->add_child(sources_add_button);
 
