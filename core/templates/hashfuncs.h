@@ -392,6 +392,20 @@ struct HashableHasher {
 	static _FORCE_INLINE_ uint32_t hash(const T &hashable) { return hashable.hash(); }
 };
 
+// Bitwise equality check. Faster than normal. Note: returns true if both values are NaN.
+static _FORCE_INLINE_ bool byte_equal_real(double p_lhs, double p_rhs) {
+	uint64_t bytes_lhs = *(uint64_t *)(void *)&p_lhs;
+	uint64_t bytes_rhs = *(uint64_t *)(void *)&p_rhs;
+	return bytes_lhs == bytes_rhs;
+}
+
+// Bitwise equality check. Faster than normal. Note: returns true if both values are NaN.
+static _FORCE_INLINE_ bool byte_equal_real(float p_lhs, float p_rhs) {
+	uint32_t bytes_lhs = *(uint32_t *)(void *)&p_lhs;
+	uint32_t bytes_rhs = *(uint32_t *)(void *)&p_rhs;
+	return bytes_lhs == bytes_rhs;
+}
+
 template <typename T>
 struct HashMapComparatorDefault {
 	static bool compare(const T &p_lhs, const T &p_rhs) {
@@ -401,29 +415,29 @@ struct HashMapComparatorDefault {
 
 template <>
 struct HashMapComparatorDefault<float> {
-	static bool compare(const float &p_lhs, const float &p_rhs) {
-		return (p_lhs == p_rhs) || (Math::is_nan(p_lhs) && Math::is_nan(p_rhs));
+	static bool compare(float p_lhs, float p_rhs) {
+		return byte_equal_real(p_lhs, p_rhs);
 	}
 };
 
 template <>
 struct HashMapComparatorDefault<double> {
-	static bool compare(const double &p_lhs, const double &p_rhs) {
-		return (p_lhs == p_rhs) || (Math::is_nan(p_lhs) && Math::is_nan(p_rhs));
+	static bool compare(double p_lhs, double p_rhs) {
+		return byte_equal_real(p_lhs, p_rhs);
 	}
 };
 
 template <>
 struct HashMapComparatorDefault<Vector2> {
 	static bool compare(const Vector2 &p_lhs, const Vector2 &p_rhs) {
-		return ((p_lhs.x == p_rhs.x) || (Math::is_nan(p_lhs.x) && Math::is_nan(p_rhs.x))) && ((p_lhs.y == p_rhs.y) || (Math::is_nan(p_lhs.y) && Math::is_nan(p_rhs.y)));
+		return byte_equal_real(p_lhs.x, p_rhs.x) && byte_equal_real(p_lhs.y, p_rhs.y);
 	}
 };
 
 template <>
 struct HashMapComparatorDefault<Vector3> {
 	static bool compare(const Vector3 &p_lhs, const Vector3 &p_rhs) {
-		return ((p_lhs.x == p_rhs.x) || (Math::is_nan(p_lhs.x) && Math::is_nan(p_rhs.x))) && ((p_lhs.y == p_rhs.y) || (Math::is_nan(p_lhs.y) && Math::is_nan(p_rhs.y))) && ((p_lhs.z == p_rhs.z) || (Math::is_nan(p_lhs.z) && Math::is_nan(p_rhs.z)));
+		return byte_equal_real(p_lhs.x, p_rhs.x) && byte_equal_real(p_lhs.y, p_rhs.y) && byte_equal_real(p_lhs.z, p_rhs.z);
 	}
 };
 
