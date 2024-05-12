@@ -394,15 +394,27 @@ struct HashableHasher {
 
 // Bitwise equality check. Faster than normal. Note: returns true if both values are NaN.
 static _FORCE_INLINE_ bool byte_equal_real(double p_lhs, double p_rhs) {
-	uint64_t bytes_lhs = *(uint64_t *)(void *)&p_lhs;
-	uint64_t bytes_rhs = *(uint64_t *)(void *)&p_rhs;
+	union {
+		double d;
+		uint64_t i;
+	} u1, u2;
+	u1.d = p_lhs;
+	u2.d = p_rhs;
+	uint64_t bytes_lhs = u1.i;
+	uint64_t bytes_rhs = u2.i;
 	return bytes_lhs == bytes_rhs;
 }
 
 // Bitwise equality check. Faster than normal. Note: returns true if both values are NaN.
 static _FORCE_INLINE_ bool byte_equal_real(float p_lhs, float p_rhs) {
-	uint32_t bytes_lhs = *(uint32_t *)(void *)&p_lhs;
-	uint32_t bytes_rhs = *(uint32_t *)(void *)&p_rhs;
+	union {
+		float d;
+		uint32_t i;
+	} u1, u2;
+	u1.d = p_lhs;
+	u2.d = p_rhs;
+	uint32_t bytes_lhs = u1.i;
+	uint32_t bytes_rhs = u2.i;
 	return bytes_lhs == bytes_rhs;
 }
 
