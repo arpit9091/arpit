@@ -415,14 +415,14 @@ struct HashMapComparatorDefault {
 
 template <>
 struct HashMapComparatorDefault<float> {
-	static bool compare(float p_lhs, float p_rhs) {
+	static bool compare(const float &p_lhs, const float &p_rhs) {
 		return byte_equal_real(p_lhs, p_rhs);
 	}
 };
 
 template <>
 struct HashMapComparatorDefault<double> {
-	static bool compare(double p_lhs, double p_rhs) {
+	static bool compare(const double &p_lhs, const double &p_rhs) {
 		return byte_equal_real(p_lhs, p_rhs);
 	}
 };
