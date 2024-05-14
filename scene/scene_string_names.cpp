@@ -129,4 +129,6 @@ SceneStringNames::SceneStringNames() {
 	shader_overrides_group_active = StaticCString::create("_shader_overrides_group_active_");
 
 	pressed = StaticCString::create("pressed");
+
+	panel = StaticCString::create("panel");
 }
