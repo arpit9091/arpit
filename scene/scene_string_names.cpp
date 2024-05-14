@@ -200,7 +200,6 @@ SceneStringNames::SceneStringNames() {
 	_get_contents_minimum_size = StaticCString::create("_get_contents_minimum_size");
 
 	theme_changed = StaticCString::create("theme_changed");
-	parameters_base_path = "parameters/";
 
 	shader_overrides_group = StaticCString::create("_shader_overrides_group_");
 	shader_overrides_group_active = StaticCString::create("_shader_overrides_group_active_");
