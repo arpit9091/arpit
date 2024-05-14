@@ -201,8 +201,6 @@ public:
 
 	StringName Master;
 
-	StringName parameters_base_path;
-
 	StringName _window_group;
 	StringName _window_input;
 	StringName _window_unhandled_input;
