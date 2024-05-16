@@ -193,12 +193,18 @@ AnimationNodeStateMachineTransition::AnimationNodeStateMachineTransition() {
 
 ////////////////////////////////////////////////////////
 
+void AnimationNodeStateMachinePlayback::_set_fading_from(const StringName &p_fading_from) {
+	fading_from = p_fading_from;
+
+	emit_signal(SNAME("fading_from_changed"), fading_from);
+}
+
 void AnimationNodeStateMachinePlayback::_set_current(AnimationNodeStateMachine *p_state_machine, const StringName &p_state) {
 	current = p_state;
 	if (is_grouped) {
-		_get_parent_playback(p_state_machine->get_animation_tree())->emit_signal(SNAME("current_changed"), p_state, fading_from);
+		_get_parent_playback(p_state_machine->get_animation_tree())->emit_signal(SNAME("current_changed"), p_state);
 	} else {
-		emit_signal(SNAME("current_changed"), p_state, fading_from);
+		emit_signal(SNAME("current_changed"), p_state);
 	}
 
 	if (current == StringName()) {
@@ -797,7 +803,7 @@ AnimationNode::NodeTimeInfo AnimationNodeStateMachinePlayback::_process(const St
 	if (teleport_request) {
 		teleport_request = false;
 		// Clear fadeing on teleport.
-		fading_from = StringName();
+		_set_fading_from(StringName());
 		fadeing_from_nti = AnimationNode::NodeTimeInfo();
 		fading_pos = 0;
 		// Init current length.
@@ -829,7 +835,7 @@ AnimationNode::NodeTimeInfo AnimationNodeStateMachinePlayback::_process(const St
 	float fade_blend = 1.0;
 	if (fading_time && fading_from != StringName()) {
 		if (!p_state_machine->states.has(fading_from)) {
-			fading_from = StringName();
+			_set_fading_from(StringName());
 		} else {
 			if (!p_seek) {
 				fading_pos += Math::abs(p_delta);
@@ -878,7 +884,7 @@ AnimationNode::NodeTimeInfo AnimationNodeStateMachinePlayback::_process(const St
 
 		if (fading_pos >= fading_time) {
 			// Finish fading.
-			fading_from = StringName();
+			_set_fading_from(StringName());
 			fadeing_from_nti = AnimationNode::NodeTimeInfo();
 		}
 	}
@@ -938,7 +944,7 @@ bool AnimationNodeStateMachinePlayback::_transition_to_next_recursive(AnimationT
 		// Setting for fading.
 		if (next.xfade) {
 			// Time to fade.
-			fading_from = current;
+			_set_fading_from(current);
 			fading_time = next.xfade;
 			fading_pos = 0;
 		} else {
@@ -950,7 +956,7 @@ bool AnimationNodeStateMachinePlayback::_transition_to_next_recursive(AnimationT
 				pi.weight = 0;
 				p_state_machine->blend_node(p_state_machine->states[current].node, current, pi, AnimationNode::FILTER_IGNORE, true, p_test_only);
 			}
-			fading_from = StringName();
+			_set_fading_from(StringName());
 			fadeing_from_nti = AnimationNode::NodeTimeInfo();
 			fading_time = 0;
 			fading_pos = 0;
@@ -1013,7 +1019,7 @@ bool AnimationNodeStateMachinePlayback::_can_transition_to_next(AnimationTree *p
 			}
 			playback->_next_main();
 			// Then, fadeing should be end.
-			fading_from = StringName();
+			_set_fading_from(StringName());
 			fadeing_from_nti = AnimationNode::NodeTimeInfo();
 			fading_pos = 0;
 		} else {
@@ -1209,7 +1215,8 @@ void AnimationNodeStateMachinePlayback::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_fading_from_node"), &AnimationNodeStateMachinePlayback::get_fading_from_node);
 	ClassDB::bind_method(D_METHOD("get_travel_path"), &AnimationNodeStateMachinePlayback::_get_travel_path);
 
-	ADD_SIGNAL(MethodInfo(SNAME("current_changed"), PropertyInfo(Variant::STRING_NAME, "node_name"), PropertyInfo(Variant::STRING_NAME, "fading_from")));
+	ADD_SIGNAL(MethodInfo(SNAME("current_changed"), PropertyInfo(Variant::STRING_NAME, "node_name")));
+	ADD_SIGNAL(MethodInfo(SNAME("fading_from_changed"), PropertyInfo(Variant::STRING_NAME, "fading_from")));
 }
 
 AnimationNodeStateMachinePlayback::AnimationNodeStateMachinePlayback() {
