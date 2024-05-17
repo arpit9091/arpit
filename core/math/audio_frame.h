@@ -133,14 +133,10 @@ struct AudioFrame {
 		return res;
 	}
 
-	_ALWAYS_INLINE_ AudioFrame(float p_left, float p_right) {
-		left = p_left;
-		right = p_right;
-	}
-	_ALWAYS_INLINE_ AudioFrame(const AudioFrame &p_frame) {
-		left = p_frame.left;
-		right = p_frame.right;
-	}
+	constexpr AudioFrame(float p_left, float p_right) :
+			left(p_left), right(p_right) {}
+	constexpr AudioFrame(const AudioFrame &p_frame) :
+			left(p_frame.left), right(p_frame.right) {}
 
 	_ALWAYS_INLINE_ void operator=(const AudioFrame &p_frame) {
 		left = p_frame.left;
@@ -151,11 +147,10 @@ struct AudioFrame {
 		return Vector2(left, right);
 	}
 
-	_ALWAYS_INLINE_ AudioFrame(const Vector2 &p_v2) {
-		left = p_v2.x;
-		right = p_v2.y;
-	}
-	_ALWAYS_INLINE_ AudioFrame() {}
+	constexpr AudioFrame(const Vector2 &p_v2) :
+			left(p_v2.x), right(p_v2.y) {}
+	constexpr AudioFrame() :
+			left(0), right(0) {}
 };
 
 _ALWAYS_INLINE_ AudioFrame operator*(float p_scalar, const AudioFrame &p_frame) {

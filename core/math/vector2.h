@@ -47,14 +47,13 @@ struct _NO_DISCARD_ Vector2 {
 
 	union {
 		struct {
-			union {
-				real_t x;
-				real_t width;
-			};
-			union {
-				real_t y;
-				real_t height;
-			};
+			real_t x;
+			real_t y;
+		};
+
+		struct {
+			real_t width;
+			real_t height;
 		};
 
 		real_t coord[2] = { 0 };
@@ -184,11 +183,10 @@ struct _NO_DISCARD_ Vector2 {
 	operator String() const;
 	operator Vector2i() const;
 
-	_FORCE_INLINE_ Vector2() {}
-	_FORCE_INLINE_ Vector2(real_t p_x, real_t p_y) {
-		x = p_x;
-		y = p_y;
-	}
+	constexpr Vector2() :
+			x(0), y(0) {}
+	constexpr Vector2(real_t p_x, real_t p_y) :
+			x(p_x), y(p_y) {}
 };
 
 _FORCE_INLINE_ Vector2 Vector2::plane_project(real_t p_d, const Vector2 &p_vec) const {
