@@ -38,6 +38,8 @@
 #include "scene/gui/line_edit.h"
 #include "scene/gui/tree.h"
 
+class CheckButton;
+
 class CreateDialog : public ConfirmationDialog {
 	GDCLASS(CreateDialog, ConfirmationDialog);
 
@@ -60,6 +62,9 @@ class CreateDialog : public ConfirmationDialog {
 	Tree *favorites = nullptr;
 	ItemList *recent = nullptr;
 	EditorHelpBit *help_bit = nullptr;
+
+	CheckButton *built_in_filter = nullptr;
+	CheckButton *custom_node_filter = nullptr;
 
 	HashMap<String, TreeItem *> search_options_types;
 	HashMap<String, String> custom_type_parents;

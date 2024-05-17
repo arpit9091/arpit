@@ -38,6 +38,7 @@
 #include "editor/editor_settings.h"
 #include "editor/editor_string_names.h"
 #include "editor/themes/editor_scale.h"
+#include "scene/gui/check_button.h"
 
 void CreateDialog::popup_create(bool p_dont_clear, bool p_replace_mode, const String &p_current_type, const String &p_current_name) {
 	_fill_type_list();
@@ -221,12 +222,16 @@ void CreateDialog::_add_type(const StringName &p_type, TypeCategory p_type_categ
 
 	TypeCategory inherited_type = TypeCategory::OTHER_TYPE;
 
+	bool is_custom_type = false;
+
 	StringName inherits;
 	if (p_type_category == TypeCategory::CPP_TYPE) {
 		inherits = ClassDB::get_parent_class(p_type);
 		inherited_type = TypeCategory::CPP_TYPE;
 	} else {
 		if (p_type_category == TypeCategory::PATH_TYPE || ScriptServer::is_global_class(p_type)) {
+			is_custom_type = true;
+
 			Ref<Script> scr;
 			if (p_type_category == TypeCategory::PATH_TYPE) {
 				ERR_FAIL_COND(!ResourceLoader::exists(p_type, "Script"));
@@ -271,6 +276,19 @@ void CreateDialog::_add_type(const StringName &p_type, TypeCategory p_type_categ
 	TreeItem *item = search_options->create_item(search_options_types[inherits]);
 	search_options_types[p_type] = item;
 	_configure_search_option_item(item, p_type, p_type_category);
+
+	if ((built_in_filter->is_pressed() && custom_node_filter->is_pressed()) || (custom_node_filter->is_pressed() && is_custom_type)) {
+		item->set_visible(false);
+	} else if (built_in_filter->is_pressed()) {
+		if (is_custom_type) {
+			for (TreeItem *curr_item = item; curr_item->get_parent() && !curr_item->get_parent()->is_visible();) {
+				curr_item = curr_item->get_parent();
+				curr_item->set_visible(true);
+			}
+		} else {
+			item->set_visible(false);
+		}
+	}
 }
 
 void CreateDialog::_configure_search_option_item(TreeItem *r_item, const StringName &p_type, TypeCategory p_type_category) {
@@ -801,6 +819,22 @@ CreateDialog::CreateDialog() {
 	favorite->connect(SceneStringName(pressed), callable_mp(this, &CreateDialog::_favorite_toggled));
 	search_hb->add_child(favorite);
 	vbc->add_margin_child(TTR("Search:"), search_hb);
+
+	HBoxContainer *filter_hb = memnew(HBoxContainer);
+
+	built_in_filter = memnew(CheckButton);
+	built_in_filter->set_text(TTR("Built-in"));
+	built_in_filter->set_tooltip_text(TTR("Filter built-in nodes."));
+	built_in_filter->connect(SceneStringName(pressed), callable_mp(this, &CreateDialog::_update_search));
+	filter_hb->add_child(built_in_filter);
+
+	custom_node_filter = memnew(CheckButton);
+	custom_node_filter->set_text(TTR("Custom Nodes"));
+	custom_node_filter->set_tooltip_text(TTR("Filter custom nodes registered with 'class_name'."));
+	custom_node_filter->connect(SceneStringName(pressed), callable_mp(this, &CreateDialog::_update_search));
+	filter_hb->add_child(custom_node_filter);
+
+	vbc->add_margin_child(TTR("Filter:"), filter_hb);
 
 	search_options = memnew(Tree);
 	search_options->set_auto_translate_mode(AUTO_TRANSLATE_MODE_DISABLED);
