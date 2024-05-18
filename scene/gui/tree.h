@@ -80,6 +80,7 @@ private:
 		bool expr = false;
 		bool checked = false;
 		bool indeterminate = false;
+		bool visible = true;
 		bool editable = false;
 		bool selected = false;
 		bool selectable = true;
@@ -99,6 +100,7 @@ private:
 
 		Variant meta;
 		String tooltip;
+		bool tooltip_visible = true;
 
 		Callable custom_draw_callback;
 
@@ -317,6 +319,12 @@ public:
 	void deselect(int p_column);
 	void set_as_cursor(int p_column);
 
+	void set_column_visible(int p_column, bool p_visible);
+	bool is_column_visible(int p_column);
+
+	void move_column(int p_column, int p_index);
+	void swap_columns(int p_column1, int p_column2);
+
 	void set_editable(int p_column, bool p_editable);
 	bool is_editable(int p_column);
 
@@ -339,6 +347,9 @@ public:
 
 	void set_tooltip_text(int p_column, const String &p_tooltip);
 	String get_tooltip_text(int p_column) const;
+
+	void set_tooltip_visible(int p_column, bool p_visible);
+	bool is_tooltip_visible(int p_column) const;
 
 	void set_text_alignment(int p_column, HorizontalAlignment p_alignment);
 	HorizontalAlignment get_text_alignment(int p_column) const;
