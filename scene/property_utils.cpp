@@ -81,7 +81,7 @@ Variant PropertyUtils::get_property_default_value(const Object *p_object, const 
 				}
 				// Replace properties stored as NodePaths with actual Nodes.
 				// Otherwise, the property value would be considered as overridden.
-				if (node_deferred) {
+				if (node_deferred && false) {
 					if (value_in_ancestor.get_type() == Variant::ARRAY) {
 						Array paths = value_in_ancestor;
 
