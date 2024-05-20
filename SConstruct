@@ -116,7 +116,7 @@ for x in sorted(glob.glob("platform/*")):
         platform_exporters.append(platform_name)
     if os.path.exists(x + "/api/api.cpp"):
         platform_apis.append(platform_name)
-    if detect.can_build():
+    if os.getenv("GODOT_CAN_BUILD_" + x.removeprefix("platform/").upper()) or detect.can_build():
         x = x.replace("platform/", "")  # rest of world
         x = x.replace("platform\\", "")  # win32
         platform_list += [x]
@@ -286,10 +286,15 @@ opts.Add(BoolVariable("builtin_zstd", "Use the built-in Zstd library", True))
 
 # Compilation environment setup
 # CXX, CC, and LINK directly set the equivalent `env` values (which may still
-# be overridden for a specific platform), the lowercase ones are appended.
+# be overridden for a specific platform if platform_tools is True), the lowercase ones are appended.
+opts.Add(BoolVariable("platform_tools", "Allow the platform to override CC, CXX, LINK, AS, AR, RANLIB, and WINDRES", True))
 opts.Add("CXX", "C++ compiler binary")
 opts.Add("CC", "C compiler binary")
 opts.Add("LINK", "Linker binary")
+opts.Add("AS", "Assembler binary")
+opts.Add("AR", "Archiver binary")
+opts.Add("RANLIB", "Ranlib binary")
+opts.Add("RC", "Resource compiler binary")
 opts.Add("cppdefines", "Custom defines for the pre-processor")
 opts.Add("ccflags", "Custom flags for both the C and C++ compilers")
 opts.Add("cxxflags", "Custom flags for the C++ compiler")

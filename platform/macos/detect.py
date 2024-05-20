@@ -107,7 +107,7 @@ def configure(env: "SConsEnvironment"):
 
     env.Append(CCFLAGS=["-fobjc-arc"])
 
-    if not "osxcross" in env:  # regular native build
+    if env["platform_tools"] and not "osxcross" in env:  # regular native build
         if env["macports_clang"] != "no":
             mpprefix = os.environ.get("MACPORTS_PREFIX", "/opt/local")
             mpclangver = env["macports_clang"]
@@ -132,17 +132,18 @@ def configure(env: "SConsEnvironment"):
             basecmd = root + "/target/bin/x86_64-apple-" + env["osxcross_sdk"] + "-"
 
         ccache_path = os.environ.get("CCACHE")
-        if ccache_path is None:
-            env["CC"] = basecmd + "cc"
-            env["CXX"] = basecmd + "c++"
-        else:
-            # there aren't any ccache wrappers available for macOS cross-compile,
-            # to enable caching we need to prepend the path to the ccache binary
-            env["CC"] = ccache_path + " " + basecmd + "cc"
-            env["CXX"] = ccache_path + " " + basecmd + "c++"
-        env["AR"] = basecmd + "ar"
-        env["RANLIB"] = basecmd + "ranlib"
-        env["AS"] = basecmd + "as"
+        if env["platform_tools"]:
+            if ccache_path is None:
+                env["CC"] = basecmd + "cc"
+                env["CXX"] = basecmd + "c++"
+            else:
+                # there aren't any ccache wrappers available for macOS cross-compile,
+                # to enable caching we need to prepend the path to the ccache binary
+                env["CC"] = ccache_path + " " + basecmd + "cc"
+                env["CXX"] = ccache_path + " " + basecmd + "c++"
+            env["AR"] = basecmd + "ar"
+            env["RANLIB"] = basecmd + "ranlib"
+            env["AS"] = basecmd + "as"
 
     # LTO
 
