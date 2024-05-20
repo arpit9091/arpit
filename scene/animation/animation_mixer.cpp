@@ -1564,6 +1564,7 @@ void AnimationMixer::_blend_process(double p_delta, bool p_update_only) {
 					if (idx < 0) {
 						continue;
 					}
+
 					// Play stream.
 					Ref<AudioStream> stream = a->audio_track_get_key_stream(i, idx);
 					if (stream.is_valid()) {
@@ -1573,6 +1574,7 @@ void AnimationMixer::_blend_process(double p_delta, bool p_update_only) {
 						if (seeked) {
 							start_ofs += time - a->track_get_key_time(i, idx);
 						}
+
 						if (t_obj->call(SNAME("get_stream")) != t->audio_stream) {
 							t_obj->call(SNAME("set_stream"), t->audio_stream);
 							t->audio_stream_playback.unref();
@@ -1590,6 +1592,16 @@ void AnimationMixer::_blend_process(double p_delta, bool p_update_only) {
 						if (t->audio_stream_playback.is_null()) {
 							t->audio_stream_playback = t_obj->call(SNAME("get_stream_playback"));
 						}
+
+						if (t_obj->call(SNAME("get_is_sample"))) {
+							Ref<AudioSamplePlayback> sample_playback;
+							sample_playback.instantiate();
+							sample_playback->stream = stream;
+							t->audio_stream_playback->set_sample_playback(sample_playback);
+							AudioServer::get_singleton()->start_sample_playback(sample_playback);
+							continue;
+						}
+
 						PlayingAudioStreamInfo pasi;
 						pasi.index = t->audio_stream_playback->play_stream(stream, start_ofs);
 						pasi.start = time;
