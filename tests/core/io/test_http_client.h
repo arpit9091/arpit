@@ -38,12 +38,12 @@
 namespace TestHTTPClient {
 
 TEST_CASE("[HTTPClient] Instantiation") {
-	Ref<HTTPClient> client = HTTPClient::create();
+	Ref<HTTPClient> client = HTTPClient::create(true);
 	CHECK_MESSAGE(client != nullptr, "A HTTP Client created should not be a null pointer");
 }
 
 TEST_CASE("[HTTPClient] query_string_from_dict") {
-	Ref<HTTPClient> client = HTTPClient::create();
+	Ref<HTTPClient> client = HTTPClient::create(true);
 	Dictionary empty_dict;
 	String empty_query = client->query_string_from_dict(empty_dict);
 	CHECK_MESSAGE(empty_query.is_empty(), "A empty dictionary should return a empty string");
@@ -69,7 +69,7 @@ TEST_CASE("[HTTPClient] query_string_from_dict") {
 }
 
 TEST_CASE("[HTTPClient] verify_headers") {
-	Ref<HTTPClient> client = HTTPClient::create();
+	Ref<HTTPClient> client = HTTPClient::create(true);
 	Vector<String> headers = { "Accept: text/html", "Content-Type: application/json", "Authorization: Bearer abc123" };
 
 	Error err = client->verify_headers(headers);
@@ -91,7 +91,7 @@ TEST_CASE("[HTTPClient] verify_headers") {
 }
 
 TEST_CASE("[HTTPClient] connect_to_host") {
-	Ref<HTTPClient> client = HTTPClient::create();
+	Ref<HTTPClient> client = HTTPClient::create(true);
 	String host = "https://www.example.com";
 	int port = 443;
 	Ref<TLSOptions> tls_options;

@@ -661,7 +661,7 @@ void HTTPRequest::_bind_methods() {
 }
 
 HTTPRequest::HTTPRequest() {
-	client = Ref<HTTPClient>(HTTPClient::create());
+	client = Ref<HTTPClient>(HTTPClient::create(true));
 	tls_options = TLSOptions::client();
 	timer = memnew(Timer);
 	timer->set_one_shot(true);

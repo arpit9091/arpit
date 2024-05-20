@@ -56,8 +56,8 @@ void EditorHTTPServer::_set_internal_certs(Ref<Crypto> p_crypto) {
 	const String crt_path = cache_path.path_join("html5_server.crt");
 	bool regen = !FileAccess::exists(key_path) || !FileAccess::exists(crt_path);
 	if (!regen) {
-		key = Ref<CryptoKey>(CryptoKey::create());
-		cert = Ref<X509Certificate>(X509Certificate::create());
+		key = Ref<CryptoKey>(CryptoKey::create(true));
+		cert = Ref<X509Certificate>(X509Certificate::create(true));
 		if (key->load(key_path) != OK || cert->load(crt_path) != OK) {
 			regen = true;
 		}
@@ -150,7 +150,7 @@ void EditorHTTPServer::_poll() {
 
 	if (use_tls) {
 		if (tls.is_null()) {
-			tls = Ref<StreamPeerTLS>(StreamPeerTLS::create());
+			tls = Ref<StreamPeerTLS>(StreamPeerTLS::create(true));
 			peer = tls;
 			if (tls->accept_stream(tcp, TLSOptions::server(key, cert)) != OK) {
 				_clear_client();
@@ -210,15 +210,15 @@ Error EditorHTTPServer::listen(int p_port, IPAddress p_address, bool p_use_tls, 
 	}
 	use_tls = p_use_tls;
 	if (use_tls) {
-		Ref<Crypto> crypto = Crypto::create();
+		Ref<Crypto> crypto = Crypto::create(true);
 		if (crypto.is_null()) {
 			return ERR_UNAVAILABLE;
 		}
 		if (!p_tls_key.is_empty() && !p_tls_cert.is_empty()) {
-			key = Ref<CryptoKey>(CryptoKey::create());
+			key = Ref<CryptoKey>(CryptoKey::create(true));
 			Error err = key->load(p_tls_key);
 			ERR_FAIL_COND_V(err != OK, err);
-			cert = Ref<X509Certificate>(X509Certificate::create());
+			cert = Ref<X509Certificate>(X509Certificate::create(true));
 			err = cert->load(p_tls_cert);
 			ERR_FAIL_COND_V(err != OK, err);
 		} else {

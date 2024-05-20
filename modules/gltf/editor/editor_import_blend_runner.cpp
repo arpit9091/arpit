@@ -244,7 +244,7 @@ Error EditorImportBlendRunner::do_import_rpc(const Dictionary &p_options) {
 	String xml_body = vformat("<?xml version=\"1.0\"?><methodCall><methodName>export_gltf</methodName><params><param><value>%s</value></param></params></methodCall>", xml_options);
 
 	// Connect to RPC server.
-	Ref<HTTPClient> client = HTTPClient::create();
+	Ref<HTTPClient> client = HTTPClient::create(true);
 	HTTPClient::Status status = connect_blender_rpc(client, 1000000);
 	if (status != HTTPClient::STATUS_CONNECTED) {
 		ERR_FAIL_V_MSG(ERR_CONNECTION_ERROR, vformat("Unexpected status during RPC connection: %d", status));

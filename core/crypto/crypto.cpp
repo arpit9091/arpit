@@ -36,10 +36,10 @@
 
 /// Resources
 
-CryptoKey *(*CryptoKey::_create)() = nullptr;
-CryptoKey *CryptoKey::create() {
+CryptoKey *(*CryptoKey::_create)(bool p_notify_postinitialize) = nullptr;
+CryptoKey *CryptoKey::create(bool p_notify_postinitialize) {
 	if (_create) {
-		return _create();
+		return _create(p_notify_postinitialize);
 	}
 	return nullptr;
 }
@@ -52,10 +52,10 @@ void CryptoKey::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("load_from_string", "string_key", "public_only"), &CryptoKey::load_from_string, DEFVAL(false));
 }
 
-X509Certificate *(*X509Certificate::_create)() = nullptr;
-X509Certificate *X509Certificate::create() {
+X509Certificate *(*X509Certificate::_create)(bool p_notify_postinitialize) = nullptr;
+X509Certificate *X509Certificate::create(bool p_notify_postinitialize) {
 	if (_create) {
-		return _create();
+		return _create(p_notify_postinitialize);
 	}
 	return nullptr;
 }
@@ -114,10 +114,10 @@ void HMACContext::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("finish"), &HMACContext::finish);
 }
 
-HMACContext *(*HMACContext::_create)() = nullptr;
-HMACContext *HMACContext::create() {
+HMACContext *(*HMACContext::_create)(bool p_notify_postinitialize) = nullptr;
+HMACContext *HMACContext::create(bool p_notify_postinitialize) {
 	if (_create) {
-		return _create();
+		return _create(p_notify_postinitialize);
 	}
 	ERR_FAIL_V_MSG(nullptr, "HMACContext is not available when the mbedtls module is disabled.");
 }
@@ -125,10 +125,10 @@ HMACContext *HMACContext::create() {
 /// Crypto
 
 void (*Crypto::_load_default_certificates)(const String &p_path) = nullptr;
-Crypto *(*Crypto::_create)() = nullptr;
-Crypto *Crypto::create() {
+Crypto *(*Crypto::_create)(bool p_notify_postinitialize) = nullptr;
+Crypto *Crypto::create(bool p_notify_postinitialize) {
 	if (_create) {
-		return _create();
+		return _create(p_notify_postinitialize);
 	}
 	ERR_FAIL_V_MSG(nullptr, "Crypto is not available when the mbedtls module is disabled.");
 }
@@ -140,7 +140,7 @@ void Crypto::load_default_certificates(const String &p_path) {
 }
 
 PackedByteArray Crypto::hmac_digest(HashingContext::HashType p_hash_type, const PackedByteArray &p_key, const PackedByteArray &p_msg) {
-	Ref<HMACContext> ctx = Ref<HMACContext>(HMACContext::create());
+	Ref<HMACContext> ctx = Ref<HMACContext>(HMACContext::create(true));
 	ERR_FAIL_COND_V_MSG(ctx.is_null(), PackedByteArray(), "HMAC is not available without mbedtls module.");
 	Error err = ctx->start(p_hash_type, p_key);
 	ERR_FAIL_COND_V(err != OK, PackedByteArray());
@@ -185,19 +185,19 @@ void Crypto::_bind_methods() {
 Ref<Resource> ResourceFormatLoaderCrypto::load(const String &p_path, const String &p_original_path, Error *r_error, bool p_use_sub_threads, float *r_progress, CacheMode p_cache_mode) {
 	String el = p_path.get_extension().to_lower();
 	if (el == "crt") {
-		X509Certificate *cert = X509Certificate::create();
+		X509Certificate *cert = X509Certificate::create(true);
 		if (cert) {
 			cert->load(p_path);
 		}
 		return cert;
 	} else if (el == "key") {
-		CryptoKey *key = CryptoKey::create();
+		CryptoKey *key = CryptoKey::create(true);
 		if (key) {
 			key->load(p_path, false);
 		}
 		return key;
 	} else if (el == "pub") {
-		CryptoKey *key = CryptoKey::create();
+		CryptoKey *key = CryptoKey::create(true);
 		if (key) {
 			key->load(p_path, true);
 		}
