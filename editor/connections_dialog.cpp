@@ -292,17 +292,16 @@ List<MethodInfo> ConnectDialog::_filter_method_list(const List<MethodInfo> &p_me
 			}
 
 			bool type_mismatch = false;
-			const List<PropertyInfo>::Element *E = p_signal.arguments.front();
-			for (const List<PropertyInfo>::Element *F = mi.arguments.front(); F; F = F->next(), E = E->next()) {
-				Variant::Type stype = E->get().type;
-				Variant::Type mtype = F->get().type;
+			for (uint32_t i = 0; i < mi.arguments.size(); ++i) {
+				Variant::Type stype = p_signal.arguments[i].type;
+				Variant::Type mtype = mi.arguments[i].type;
 
 				if (stype != Variant::NIL && mtype != Variant::NIL && stype != mtype) {
 					type_mismatch = true;
 					break;
 				}
 
-				if (stype == Variant::OBJECT && mtype == Variant::OBJECT && !ClassDB::is_parent_class(E->get().class_name, F->get().class_name)) {
+				if (stype == Variant::OBJECT && mtype == Variant::OBJECT && !ClassDB::is_parent_class(p_signal.arguments[i].class_name, mi.arguments[i].class_name)) {
 					type_mismatch = true;
 					break;
 				}
@@ -529,13 +528,12 @@ String ConnectDialog::get_signature(const MethodInfo &p_method, PackedStringArra
 	signature.append(p_method.name);
 	signature.append("(");
 
-	int i = 0;
-	for (List<PropertyInfo>::ConstIterator itr = p_method.arguments.begin(); itr != p_method.arguments.end(); ++itr, ++i) {
-		if (itr != p_method.arguments.begin()) {
+	for (uint32_t i = 0; i < p_method.arguments.size(); ++i) {
+		if (i > 0) {
 			signature.append(", ");
 		}
 
-		const PropertyInfo &pi = *itr;
+		const PropertyInfo &pi = p_method.arguments[i];
 		String type_name;
 		switch (pi.type) {
 			case Variant::NIL:
