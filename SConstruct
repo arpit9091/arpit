@@ -569,9 +569,9 @@ if env["build_profile"] != "":
 # Platform specific flags.
 # These can sometimes override default options.
 flag_list = platform_flags[env["platform"]]
-for f in flag_list:
-    if not (f[0] in ARGUMENTS) or ARGUMENTS[f[0]] == "auto":  # Allow command line to override platform flags
-        env[f[0]] = f[1]
+for key, value in flag_list.items():
+    if key not in ARGUMENTS or ARGUMENTS[key] == "auto":  # Allow command line to override platform flags
+        env[key] = value
 
 # 'dev_mode' and 'production' are aliases to set default options if they haven't been
 # set manually by the user.
