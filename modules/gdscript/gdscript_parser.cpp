@@ -4315,7 +4315,15 @@ bool GDScriptParser::export_annotations(const AnnotationNode *p_annotation, Node
 					return false;
 				}
 				break;
-			case GDScriptParser::DataType::CLASS:
+			case GDScriptParser::DataType::CLASS: {
+				StringName class_name;
+				if (export_type.class_type) {
+					class_name = export_type.class_type->get_global_name();
+				}
+				if (class_name == StringName()) {
+					push_error(R"(Script export type must be a global class.)", p_annotation);
+					return false;
+				}
 				if (ClassDB::is_parent_class(export_type.native_type, SNAME("Resource"))) {
 					variable->export_info.type = Variant::OBJECT;
 					variable->export_info.hint = PROPERTY_HINT_RESOURCE_TYPE;
@@ -4328,8 +4336,8 @@ bool GDScriptParser::export_annotations(const AnnotationNode *p_annotation, Node
 					push_error(R"(Export type can only be built-in, a resource, a node, or an enum.)", p_annotation);
 					return false;
 				}
+			} break;
 
-				break;
 			case GDScriptParser::DataType::SCRIPT: {
 				StringName class_name;
 				StringName native_base;
@@ -4344,10 +4352,21 @@ bool GDScriptParser::export_annotations(const AnnotationNode *p_annotation, Node
 						native_base = script->get_instance_base_type();
 					}
 				}
-				if (class_name != StringName() && native_base != StringName() && ClassDB::is_parent_class(native_base, SNAME("Resource"))) {
+				if (class_name == StringName()) {
+					push_error(R"(Script export type must be a global class.)", p_annotation);
+					return false;
+				}
+				if (native_base != StringName() && ClassDB::is_parent_class(native_base, SNAME("Resource"))) {
 					variable->export_info.type = Variant::OBJECT;
 					variable->export_info.hint = PROPERTY_HINT_RESOURCE_TYPE;
 					variable->export_info.hint_string = class_name;
+				} else if (native_base != StringName() && ClassDB::is_parent_class(native_base, SNAME("Node"))) {
+					variable->export_info.type = Variant::OBJECT;
+					variable->export_info.hint = PROPERTY_HINT_NODE_TYPE;
+					variable->export_info.hint_string = class_name;
+				} else {
+					push_error(R"(Export type can only be built-in, a resource, a node, or an enum.)", p_annotation);
+					return false;
 				}
 			} break;
 			case GDScriptParser::DataType::ENUM: {
