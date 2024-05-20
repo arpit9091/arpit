@@ -372,6 +372,14 @@ if env["platform"] in platform_opts:
     for opt in platform_opts[env["platform"]]:
         opts.Add(opt)
 
+# Platform-specific flags.
+# These can sometimes override default options, so they need to be processed
+# as early as possible to ensure that we're using the correct values.
+flag_list = platform_flags[env["platform"]]
+for f in flag_list:
+    if not (f[0] in ARGUMENTS) or ARGUMENTS[f[0]] == "auto":  # Allow command line to override platform flags
+        env[f[0]] = f[1]
+
 # Update the environment to take platform-specific options into account.
 opts.Update(env, {**ARGUMENTS, **env.Dictionary()})
 
@@ -566,17 +574,8 @@ if env["build_profile"] != "":
         print_error('Failed to open feature build profile: "{}"'.format(env["build_profile"]))
         Exit(255)
 
-# Platform specific flags.
-# These can sometimes override default options.
-flag_list = platform_flags[env["platform"]]
-for f in flag_list:
-    if not (f[0] in ARGUMENTS) or ARGUMENTS[f[0]] == "auto":  # Allow command line to override platform flags
-        env[f[0]] = f[1]
-
 # 'dev_mode' and 'production' are aliases to set default options if they haven't been
 # set manually by the user.
-# These need to be checked *after* platform specific flags so that different
-# default values can be set (e.g. to keep LTO off for `production` on some platforms).
 if env["dev_mode"]:
     env["verbose"] = methods.get_cmdline_bool("verbose", True)
     env["warnings"] = ARGUMENTS.get("warnings", "extra")
