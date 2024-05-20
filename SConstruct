@@ -961,6 +961,10 @@ if env["minizip"]:
 if env["brotli"]:
     env.Append(CPPDEFINES=["BROTLI_ENABLED"])
 
+if env["d3d12"] and env["platform"] != "windows":
+    print_warning(f'Platform "{env["platform"]}" does not support Direct3D 12, disabling `d3d12` option.')
+    env["d3d12"] = False
+
 if not env["verbose"]:
     methods.no_verbose(env)
 

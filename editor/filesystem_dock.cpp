@@ -3279,6 +3279,9 @@ void FileSystemDock::_file_and_folders_fill_popup(PopupMenu *p_popup, const Vect
 	if (p_paths.size() == 1) {
 		const String &fpath = p_paths[0];
 
+#if defined(ANDROID_ENABLED) || defined(WEB_ENABLED)
+		[[maybe_unused]]
+#endif
 		bool added_separator = false;
 
 		if (favorites_list.has(fpath)) {
