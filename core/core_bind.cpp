@@ -33,13 +33,16 @@
 #include "core/config/project_settings.h"
 #include "core/crypto/crypto_core.h"
 #include "core/debugger/engine_debugger.h"
+#include "core/error/error_macros.h"
 #include "core/io/file_access_compressed.h"
 #include "core/io/file_access_encrypted.h"
 #include "core/io/marshalls.h"
 #include "core/math/geometry_2d.h"
 #include "core/math/geometry_3d.h"
+#include "core/object/object.h"
 #include "core/os/keyboard.h"
 #include "core/os/thread_safe.h"
+#include "core/variant/array.h"
 #include "core/variant/typed_array.h"
 
 namespace core_bind {
@@ -1477,6 +1480,20 @@ TypedArray<Dictionary> ClassDB::class_get_method_list(const StringName &p_class,
 	return ret;
 }
 
+Variant ClassDB::class_call_static_method(const Variant **p_args, int p_argcount, Callable::CallError &r_error) {
+	if (p_argcount < 2) {
+		r_error.error = Callable::CallError::CALL_ERROR_TOO_FEW_ARGUMENTS;
+		return Variant();
+	} else if (!p_args[0]->is_string() || !p_args[1]->is_string()) {
+		r_error.error = Callable::CallError::CALL_ERROR_INVALID_ARGUMENT;
+		return Variant();
+	}
+	MethodBind *bind = ::ClassDB::get_method(*p_args[0], *p_args[1]);
+	ERR_FAIL_COND_V_MSG(bind == nullptr, Variant(), "Cannot find static method.");
+	ERR_FAIL_COND_V_MSG(!bind->is_static(), Variant(), "Method is not static.");
+	return bind->call(nullptr, p_args + 2, p_argcount - 2, r_error);
+}
+
 PackedStringArray ClassDB::class_get_integer_constant_list(const StringName &p_class, bool p_no_inheritance) const {
 	List<String> constants;
 	::ClassDB::get_integer_constant_list(p_class, &constants, p_no_inheritance);
@@ -1594,6 +1611,8 @@ void ClassDB::_bind_methods() {
 	::ClassDB::bind_method(D_METHOD("class_has_method", "class", "method", "no_inheritance"), &ClassDB::class_has_method, DEFVAL(false));
 
 	::ClassDB::bind_method(D_METHOD("class_get_method_argument_count", "class", "method", "no_inheritance"), &ClassDB::class_get_method_argument_count, DEFVAL(false));
+
+	::ClassDB::bind_vararg_method(METHOD_FLAGS_DEFAULT, "class_call_static_method", &ClassDB::class_call_static_method, MethodInfo("class_call_static_method", PropertyInfo(Variant::STRING_NAME, "class"), PropertyInfo(Variant::STRING_NAME, "method")));
 
 	::ClassDB::bind_method(D_METHOD("class_get_method_list", "class", "no_inheritance"), &ClassDB::class_get_method_list, DEFVAL(false));
 
