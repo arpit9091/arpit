@@ -99,6 +99,8 @@ public:
 	static void save_global_classes();
 	static String get_global_class_cache_file_path();
 
+	static String get_current_script_backtrace();
+
 	static void init_languages();
 	static void finish_languages();
 	static bool are_languages_initialized();
