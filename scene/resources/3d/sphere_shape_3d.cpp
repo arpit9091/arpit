@@ -30,6 +30,8 @@
 
 #include "sphere_shape_3d.h"
 
+#include "scene/resources/material.h"
+#include "scene/resources/mesh.h"
 #include "servers/physics_server_3d.h"
 
 Vector<Vector3> SphereShape3D::get_debug_mesh_lines() const {
@@ -52,6 +54,63 @@ Vector<Vector3> SphereShape3D::get_debug_mesh_lines() const {
 	}
 
 	return points;
+}
+
+Ref<ArrayMesh> SphereShape3D::get_debug_arraymesh_faces(const Color &p_modulate) const {
+	int prevrow, thisrow, point;
+
+	const int rings = 63;
+	const int radial_segments = 64;
+
+	Vector<Vector3> points;
+	Vector<Color> colors;
+	Vector<int> indices;
+	point = 0;
+
+	thisrow = 0;
+	prevrow = 0;
+	for (int j = 0; j <= (rings + 1); j++) {
+		float v = j;
+		float w;
+
+		v /= (rings + 1);
+		w = sin(Math_PI * v);
+		const float y = radius * cos(Math_PI * v);
+
+		for (int i = 0; i <= radial_segments; i++) {
+			float u = i;
+			u /= radial_segments;
+
+			Vector3 p = Vector3(sin(u * Math_TAU) * radius * w, y, cos(u * Math_TAU) * radius * w);
+			points.push_back(p);
+			point++;
+
+			colors.push_back(p_modulate);
+
+			if (i > 0 && j > 0) {
+				indices.push_back(prevrow + i - 1);
+				indices.push_back(prevrow + i);
+				indices.push_back(thisrow + i - 1);
+
+				indices.push_back(prevrow + i);
+				indices.push_back(thisrow + i);
+				indices.push_back(thisrow + i - 1);
+			}
+		}
+
+		prevrow = thisrow;
+		thisrow = point;
+	}
+
+	Ref<ArrayMesh> mesh = memnew(ArrayMesh);
+	Array a;
+	a.resize(Mesh::ARRAY_MAX);
+	a[RS::ARRAY_VERTEX] = points;
+	a[RS::ARRAY_COLOR] = colors;
+	a[RS::ARRAY_INDEX] = indices;
+	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, a);
+
+	return mesh;
 }
 
 real_t SphereShape3D::get_enclosing_radius() const {

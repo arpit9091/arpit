@@ -30,6 +30,7 @@
 
 #include "cylinder_shape_3d.h"
 
+#include "scene/resources/mesh.h"
 #include "servers/physics_server_3d.h"
 
 Vector<Vector3> CylinderShape3D::get_debug_mesh_lines() const {
@@ -58,6 +59,123 @@ Vector<Vector3> CylinderShape3D::get_debug_mesh_lines() const {
 	}
 
 	return points;
+}
+
+Ref<ArrayMesh> CylinderShape3D::get_debug_arraymesh_faces(const Color &p_modulate) const {
+	int prevrow, thisrow, point;
+	float x, y, z, u, v;
+
+	Vector<Vector3> points;
+	Vector<Color> colors;
+	Vector<int> indices;
+	point = 0;
+
+	const int radial_segments = 32;
+
+	thisrow = 0;
+	prevrow = 0;
+	for (int j = 0; j <= 1; j++) {
+		v = j;
+
+		y = height * v;
+		y = (height * 0.5) - y;
+
+		for (int i = 0; i <= radial_segments; i++) {
+			u = i;
+			u /= radial_segments;
+
+			x = sin(u * Math_TAU);
+			z = cos(u * Math_TAU);
+
+			Vector3 p = Vector3(x * radius, y, z * radius);
+			points.push_back(p);
+			colors.push_back(p_modulate);
+			point++;
+
+			if (i > 0 && j > 0) {
+				indices.push_back(prevrow + i - 1);
+				indices.push_back(prevrow + i);
+				indices.push_back(thisrow + i - 1);
+
+				indices.push_back(prevrow + i);
+				indices.push_back(thisrow + i);
+				indices.push_back(thisrow + i - 1);
+			}
+		}
+
+		prevrow = thisrow;
+		thisrow = point;
+	}
+
+	// Add top.
+	y = height * 0.5;
+
+	thisrow = point;
+	points.push_back(Vector3(0.0, y, 0.0));
+	colors.push_back(p_modulate);
+	point++;
+
+	for (int i = 0; i <= radial_segments; i++) {
+		float r = i;
+		r /= radial_segments;
+
+		x = sin(r * Math_TAU);
+		z = cos(r * Math_TAU);
+
+		u = ((x + 1.0) * 0.25);
+		v = 0.5 + ((z + 1.0) * 0.25);
+
+		Vector3 p = Vector3(x * radius, y, z * radius);
+		points.push_back(p);
+		colors.push_back(p_modulate);
+		point++;
+
+		if (i > 0) {
+			indices.push_back(thisrow);
+			indices.push_back(point - 1);
+			indices.push_back(point - 2);
+		}
+	}
+
+	// Add bottom.
+	y = height * -0.5;
+
+	thisrow = point;
+	points.push_back(Vector3(0.0, y, 0.0));
+	colors.push_back(p_modulate);
+	point++;
+
+	for (int i = 0; i <= radial_segments; i++) {
+		float r = i;
+		r /= radial_segments;
+
+		x = sin(r * Math_TAU);
+		z = cos(r * Math_TAU);
+
+		u = 0.5 + ((x + 1.0) * 0.25);
+		v = 1.0 - ((z + 1.0) * 0.25);
+
+		Vector3 p = Vector3(x * radius, y, z * radius);
+		points.push_back(p);
+		colors.push_back(p_modulate);
+		point++;
+
+		if (i > 0) {
+			indices.push_back(thisrow);
+			indices.push_back(point - 2);
+			indices.push_back(point - 1);
+		}
+	}
+
+	Ref<ArrayMesh> mesh = memnew(ArrayMesh);
+	Array a;
+	a.resize(Mesh::ARRAY_MAX);
+	a[RS::ARRAY_VERTEX] = points;
+	a[RS::ARRAY_COLOR] = colors;
+	a[RS::ARRAY_INDEX] = indices;
+	mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, a);
+
+	return mesh;
 }
 
 real_t CylinderShape3D::get_enclosing_radius() const {
