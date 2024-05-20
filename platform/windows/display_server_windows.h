@@ -412,6 +412,7 @@ class DisplayServerWindows : public DisplayServer {
 		bool tilt_supported;
 		bool pen_inverted = false;
 		bool block_mm = false;
+		bool visible = false;
 
 		int last_pressure_update;
 		float last_pressure;
@@ -580,6 +581,7 @@ public:
 
 	virtual WindowID create_sub_window(WindowMode p_mode, VSyncMode p_vsync_mode, uint32_t p_flags, const Rect2i &p_rect = Rect2i()) override;
 	virtual void show_window(WindowID p_window) override;
+	virtual void hide_window(WindowID p_window) override;
 	virtual void delete_sub_window(WindowID p_window) override;
 
 	virtual WindowID window_get_active_popup() const override;
@@ -697,11 +699,11 @@ public:
 
 	virtual void set_context(Context p_context) override;
 
-	static DisplayServer *create_func(const String &p_rendering_driver, WindowMode p_mode, VSyncMode p_vsync_mode, uint32_t p_flags, const Vector2i *p_position, const Vector2i &p_resolution, int p_screen, Error &r_error);
+	static DisplayServer *create_func(const String &p_rendering_driver, WindowMode p_mode, VSyncMode p_vsync_mode, uint32_t p_flags, const Vector2i *p_position, const Vector2i &p_resolution, int p_screen, bool p_visible, Error &r_error);
 	static Vector<String> get_rendering_drivers_func();
 	static void register_windows_driver();
 
-	DisplayServerWindows(const String &p_rendering_driver, WindowMode p_mode, VSyncMode p_vsync_mode, uint32_t p_flags, const Vector2i *p_position, const Vector2i &p_resolution, int p_screen, Error &r_error);
+	DisplayServerWindows(const String &p_rendering_driver, WindowMode p_mode, VSyncMode p_vsync_mode, uint32_t p_flags, const Vector2i *p_position, const Vector2i &p_resolution, int p_screen, bool p_visible, Error &r_error);
 	~DisplayServerWindows();
 };
 
