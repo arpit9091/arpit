@@ -268,11 +268,14 @@ Error EditorDebuggerNode::start(const String &p_uri) {
 	}
 	stop(true);
 	current_uri = p_uri;
-	if (EDITOR_GET("run/output/always_open_output_on_play")) {
+
+	int action_on_play = EDITOR_GET("run/bottom_panel/action_on_play");
+	if (action_on_play == 1) {
 		EditorNode::get_bottom_panel()->make_item_visible(EditorNode::get_log());
-	} else {
+	} else if (action_on_play == 2) {
 		EditorNode::get_bottom_panel()->make_item_visible(this);
 	}
+
 	server = Ref<EditorDebuggerServer>(EditorDebuggerServer::create(p_uri.substr(0, p_uri.find("://") + 3)));
 	const Error err = server->start(p_uri);
 	if (err != OK) {
