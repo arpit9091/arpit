@@ -207,6 +207,16 @@ void HTTPRequest::cancel_request() {
 	requesting = false;
 }
 
+Error HTTPRequest::_get_redirect_headers(Vector<String> *r_headers) {
+	for (const String &E : headers) {
+		// We strip content headers when changing a redirect to GET.
+		if (!E.begins_with("Content-Type: ") && !E.begins_with("Content-Length: ") && !E.begins_with("Content-Location: ") && !E.begins_with("Content-Encoding: ") && !E.begins_with("Transfer-Encoding: ") && !E.begins_with("Connection: ") && !E.begins_with("Authorization: ")) {
+			r_headers->push_back(E);
+		}
+	}
+	return OK;
+}
+
 bool HTTPRequest::_handle_response(bool *ret_value) {
 	if (!client->has_response()) {
 		_defer_done(RESULT_NO_RESPONSE, 0, PackedStringArray(), PackedByteArray());
@@ -266,6 +276,16 @@ bool HTTPRequest::_handle_response(bool *ret_value) {
 				final_body_size.set(0);
 				redirections = new_redirs;
 				*ret_value = false;
+				if (method != HTTPClient::METHOD_GET && method != HTTPClient::METHOD_HEAD && method != HTTPClient::METHOD_OPTIONS && method != HTTPClient::METHOD_TRACE) {
+					// 301, 302, and 303 are changed to GET for unsafe methods.
+					// See: https://www.rfc-editor.org/rfc/rfc9110#section-15.4-3.1
+					method = HTTPClient::METHOD_GET;
+					// Content headers should be dropped if changing method.
+					// See: https://www.rfc-editor.org/rfc/rfc9110#section-15.4-6.2.1
+					Vector<String> req_headers;
+					_get_redirect_headers(&req_headers);
+					headers = req_headers;
+				}
 				return true;
 			}
 		}
