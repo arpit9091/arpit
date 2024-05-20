@@ -3898,33 +3898,23 @@ static Error _lookup_symbol_from_base(const GDScriptParser::DataType &p_base, co
 							return OK;
 						}
 					} else {
-						/*
-						// Because get_integer_constant_enum and get_integer_constant don't work on @GlobalScope
-						// We cannot determine the exact nature of the identifier here
-						// Otherwise these codes would work
-						StringName enumName = ClassDB::get_integer_constant_enum("@GlobalScope", p_symbol, true);
-						if (enumName != nullptr) {
+						if (CoreConstants::is_global_enum(p_symbol)) {
 							r_result.type = ScriptLanguage::LOOKUP_RESULT_CLASS_ENUM;
 							r_result.class_name = "@GlobalScope";
-							r_result.class_member = enumName;
+							r_result.class_member = p_symbol;
 							return OK;
-						}
-						else {
+						} else if (CoreConstants::is_global_constant(p_symbol)) {
 							r_result.type = ScriptLanguage::LOOKUP_RESULT_CLASS_CONSTANT;
 							r_result.class_name = "@GlobalScope";
 							r_result.class_member = p_symbol;
 							return OK;
-						}*/
-						r_result.type = ScriptLanguage::LOOKUP_RESULT_CLASS_TBD_GLOBALSCOPE;
-						r_result.class_name = "@GlobalScope";
-						r_result.class_member = p_symbol;
-						return OK;
+						}
 					}
 				} else {
 					List<StringName> utility_functions;
 					Variant::get_utility_function_list(&utility_functions);
 					if (utility_functions.find(p_symbol) != nullptr) {
-						r_result.type = ScriptLanguage::LOOKUP_RESULT_CLASS_TBD_GLOBALSCOPE;
+						r_result.type = ScriptLanguage::LOOKUP_RESULT_CLASS_METHOD;
 						r_result.class_name = "@GlobalScope";
 						r_result.class_member = p_symbol;
 						return OK;

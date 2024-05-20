@@ -229,10 +229,16 @@ private:
 
 	/* Symbol lookup */
 	bool symbol_lookup_on_click_enabled = false;
-
-	String symbol_lookup_new_word = "";
-	String symbol_lookup_word = "";
+	String symbol_lookup_new_word;
+	String symbol_lookup_word;
 	Point2i symbol_lookup_pos;
+
+	/* Symbol tooltip */
+	bool symbol_tooltip_on_hover_enabled = false;
+	String symbol_tooltip_word;
+	Point2i symbol_tooltip_pos; // Column and line.
+	Timer *symbol_tooltip_timer = nullptr;
+	void _on_symbol_tooltip_timer_timeout();
 
 	/* Visual */
 	struct ThemeCache {
@@ -491,6 +497,10 @@ public:
 	String get_text_with_cursor_char(int p_line, int p_column) const;
 
 	void set_symbol_lookup_word_as_valid(bool p_valid);
+
+	/* Symbol tooltip */
+	void set_symbol_tooltip_on_hover_enabled(bool p_enabled);
+	bool is_symbol_tooltip_on_hover_enabled() const;
 
 	/* Text manipulation */
 	void move_lines_up();

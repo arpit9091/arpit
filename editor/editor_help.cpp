@@ -2318,7 +2318,7 @@ void EditorHelp::_help_callback(const String &p_topic) {
 		if (annotation_line.has(name)) {
 			line = annotation_line[name];
 		}
-	} else if (what == "class_global") {
+	} else if (what == "class_global") { // Deprecated.
 		if (constant_line.has(name)) {
 			line = constant_line[name];
 		} else if (method_line.has(name)) {
@@ -3174,6 +3174,105 @@ EditorHelpBit::HelpData EditorHelpBit::_get_class_help_data(const StringName &p_
 	return result;
 }
 
+EditorHelpBit::HelpData EditorHelpBit::_get_enum_help_data(const StringName &p_class_name, const StringName &p_enum_name) {
+	if (doc_enum_cache.has(p_class_name) && doc_enum_cache[p_class_name].has(p_enum_name)) {
+		return doc_enum_cache[p_class_name][p_enum_name];
+	}
+
+	HelpData result;
+
+	const DocTools *dd = EditorHelp::get_doc_data();
+	const HashMap<String, DocData::ClassDoc>::ConstIterator E = dd->class_list.find(p_class_name);
+	if (E) {
+		// Non-native enums shouldn't be cached, nor translated.
+		const bool is_native = !E->value.is_script_doc;
+
+		for (const KeyValue<String, DocData::EnumDoc> &kv : E->value.enums) {
+			const StringName enum_name = kv.key;
+			const DocData::EnumDoc &enum_doc = kv.value;
+
+			HelpData current;
+			current.description = HANDLE_DOC(enum_doc.description);
+			if (enum_doc.is_deprecated) {
+				if (enum_doc.deprecated_message.is_empty()) {
+					current.deprecated_message = TTR("This enumeration may be changed or removed in future versions.");
+				} else {
+					current.deprecated_message = HANDLE_DOC(enum_doc.deprecated_message);
+				}
+			}
+			if (enum_doc.is_experimental) {
+				if (enum_doc.experimental_message.is_empty()) {
+					current.experimental_message = TTR("This enumeration may be changed or removed in future versions.");
+				} else {
+					current.experimental_message = HANDLE_DOC(enum_doc.experimental_message);
+				}
+			}
+
+			if (enum_name == p_enum_name) {
+				result = current;
+
+				if (!is_native) {
+					break;
+				}
+			}
+
+			if (is_native) {
+				doc_enum_cache[p_class_name][enum_name] = current;
+			}
+		}
+	}
+
+	return result;
+}
+
+EditorHelpBit::HelpData EditorHelpBit::_get_constant_help_data(const StringName &p_class_name, const StringName &p_constant_name) {
+	if (doc_constant_cache.has(p_class_name) && doc_constant_cache[p_class_name].has(p_constant_name)) {
+		return doc_constant_cache[p_class_name][p_constant_name];
+	}
+
+	HelpData result;
+
+	const DocTools *dd = EditorHelp::get_doc_data();
+	const HashMap<String, DocData::ClassDoc>::ConstIterator E = dd->class_list.find(p_class_name);
+	if (E) {
+		// Non-native constants shouldn't be cached, nor translated.
+		const bool is_native = !E->value.is_script_doc;
+
+		for (const DocData::ConstantDoc &constant : E->value.constants) {
+			HelpData current;
+			current.description = HANDLE_DOC(constant.description);
+			if (constant.is_deprecated) {
+				if (constant.deprecated_message.is_empty()) {
+					current.deprecated_message = TTR("This constant may be changed or removed in future versions.");
+				} else {
+					current.deprecated_message = HANDLE_DOC(constant.deprecated_message);
+				}
+			}
+			if (constant.is_experimental) {
+				if (constant.experimental_message.is_empty()) {
+					current.experimental_message = TTR("This constant may be changed or removed in future versions.");
+				} else {
+					current.experimental_message = HANDLE_DOC(constant.experimental_message);
+				}
+			}
+
+			if (constant.name == p_constant_name) {
+				result = current;
+
+				if (!is_native) {
+					break;
+				}
+			}
+
+			if (is_native) {
+				doc_constant_cache[p_class_name][constant.name] = current;
+			}
+		}
+	}
+
+	return result;
+}
+
 EditorHelpBit::HelpData EditorHelpBit::_get_property_help_data(const StringName &p_class_name, const StringName &p_property_name) {
 	if (doc_property_cache.has(p_class_name) && doc_property_cache[p_class_name].has(p_property_name)) {
 		return doc_property_cache[p_class_name][p_property_name];
@@ -3251,6 +3350,48 @@ EditorHelpBit::HelpData EditorHelpBit::_get_property_help_data(const StringName 
 				doc_property_cache[p_class_name][property.name] = current;
 			}
 		}
+	}
+
+	return result;
+}
+
+EditorHelpBit::HelpData EditorHelpBit::_get_theme_item_help_data(const StringName &p_class_name, const StringName &p_theme_item_name) {
+	if (doc_theme_item_cache.has(p_class_name) && doc_theme_item_cache[p_class_name].has(p_theme_item_name)) {
+		return doc_theme_item_cache[p_class_name][p_theme_item_name];
+	}
+
+	HelpData result;
+
+	bool found = false;
+	const DocTools *dd = EditorHelp::get_doc_data();
+	HashMap<String, DocData::ClassDoc>::ConstIterator E = dd->class_list.find(p_class_name);
+	while (E) {
+		// Non-native theme items shouldn't be cached, nor translated.
+		const bool is_native = !E->value.is_script_doc;
+
+		for (const DocData::ThemeItemDoc &theme_item : E->value.theme_properties) {
+			HelpData current;
+			current.description = HANDLE_DOC(theme_item.description);
+
+			if (theme_item.name == p_theme_item_name) {
+				result = current;
+				found = true;
+				if (!is_native) {
+					break;
+				}
+			}
+
+			if (is_native) {
+				doc_theme_item_cache[p_class_name][theme_item.name] = current;
+			}
+		}
+
+		if (found || E->value.inherits.is_empty()) {
+			break;
+		}
+
+		// Check for inherited theme items.
+		E = dd->class_list.find(E->value.inherits);
 	}
 
 	return result;
@@ -3359,43 +3500,52 @@ EditorHelpBit::HelpData EditorHelpBit::_get_signal_help_data(const StringName &p
 	return result;
 }
 
-EditorHelpBit::HelpData EditorHelpBit::_get_theme_item_help_data(const StringName &p_class_name, const StringName &p_theme_item_name) {
-	if (doc_theme_item_cache.has(p_class_name) && doc_theme_item_cache[p_class_name].has(p_theme_item_name)) {
-		return doc_theme_item_cache[p_class_name][p_theme_item_name];
+EditorHelpBit::HelpData EditorHelpBit::_get_annotation_help_data(const StringName &p_class_name, const StringName &p_annotation_name) {
+	if (doc_annotation_cache.has(p_class_name) && doc_annotation_cache[p_class_name].has(p_annotation_name)) {
+		return doc_annotation_cache[p_class_name][p_annotation_name];
 	}
 
 	HelpData result;
 
-	bool found = false;
-	const DocTools *dd = EditorHelp::get_doc_data();
-	HashMap<String, DocData::ClassDoc>::ConstIterator E = dd->class_list.find(p_class_name);
-	while (E) {
-		// Non-native theme items shouldn't be cached, nor translated.
+	const HashMap<String, DocData::ClassDoc>::ConstIterator E = EditorHelp::get_doc_data()->class_list.find(p_class_name);
+	if (E) {
+		// Non-native annotations shouldn't be cached, nor translated.
 		const bool is_native = !E->value.is_script_doc;
 
-		for (const DocData::ThemeItemDoc &theme_item : E->value.theme_properties) {
+		for (const DocData::MethodDoc &annotation : E->value.annotations) {
 			HelpData current;
-			current.description = HANDLE_DOC(theme_item.description);
+			current.description = HANDLE_DOC(annotation.description);
+			if (annotation.is_deprecated) {
+				if (annotation.deprecated_message.is_empty()) {
+					current.deprecated_message = TTR("This annotation may be changed or removed in future versions.");
+				} else {
+					current.deprecated_message = HANDLE_DOC(annotation.deprecated_message);
+				}
+			}
+			if (annotation.is_experimental) {
+				if (annotation.experimental_message.is_empty()) {
+					current.experimental_message = TTR("This annotation may be changed or removed in future versions.");
+				} else {
+					current.experimental_message = HANDLE_DOC(annotation.experimental_message);
+				}
+			}
+			for (const DocData::ArgumentDoc &argument : annotation.arguments) {
+				const DocType argument_type = { argument.type, argument.enumeration, argument.is_bitfield };
+				current.arguments.push_back({ argument.name, argument_type, argument.default_value });
+			}
 
-			if (theme_item.name == p_theme_item_name) {
+			if (annotation.name == p_annotation_name) {
 				result = current;
-				found = true;
+
 				if (!is_native) {
 					break;
 				}
 			}
 
 			if (is_native) {
-				doc_theme_item_cache[p_class_name][theme_item.name] = current;
+				doc_annotation_cache[p_class_name][annotation.name] = current;
 			}
 		}
-
-		if (found || E->value.inherits.is_empty()) {
-			break;
-		}
-
-		// Check for inherited theme items.
-		E = dd->class_list.find(E->value.inherits);
 	}
 
 	return result;
@@ -3433,7 +3583,7 @@ void EditorHelpBit::_update_labels() {
 
 		title->pop(); // font
 
-		if (symbol_type == "method" || symbol_type == "signal") {
+		if (symbol_type == "method" || symbol_type == "signal" || symbol_type == "annotation") {
 			const Color symbol_color = get_theme_color(SNAME("symbol_color"), SNAME("EditorHelp"));
 			const Color value_color = get_theme_color(SNAME("value_color"), SNAME("EditorHelp"));
 
@@ -3644,6 +3794,12 @@ void EditorHelpBit::parse_symbol(const String &p_symbol) {
 		visible_type = TTR("Class:");
 		name = class_name;
 		help_data = _get_class_help_data(class_name);
+	} else if (item_type == "enum") {
+		visible_type = TTR("Enumeration:");
+		help_data = _get_enum_help_data(class_name, item_name);
+	} else if (item_type == "constant") {
+		visible_type = TTR("Constant:");
+		help_data = _get_constant_help_data(class_name, item_name);
 	} else if (item_type == "property") {
 		if (name.begins_with("metadata/")) {
 			visible_type = TTR("Metadata:");
@@ -3658,17 +3814,20 @@ void EditorHelpBit::parse_symbol(const String &p_symbol) {
 		visible_type = TTR("Internal Property:");
 		help_data = HelpData();
 		help_data.description = "[color=<EditorHelpBitCommentColor>][i]" + TTR("This property can only be set in the Inspector.") + "[/i][/color]";
+	} else if (item_type == "theme_item") {
+		visible_type = TTR("Theme Property:");
+		help_data = _get_theme_item_help_data(class_name, item_name);
 	} else if (item_type == "method") {
 		visible_type = TTR("Method:");
 		help_data = _get_method_help_data(class_name, item_name);
 	} else if (item_type == "signal") {
 		visible_type = TTR("Signal:");
 		help_data = _get_signal_help_data(class_name, item_name);
-	} else if (item_type == "theme_item") {
-		visible_type = TTR("Theme Property:");
-		help_data = _get_theme_item_help_data(class_name, item_name);
+	} else if (item_type == "annotation") {
+		visible_type = TTR("Annotation:");
+		help_data = _get_annotation_help_data(class_name, item_name);
 	} else {
-		ERR_FAIL_MSG("Invalid tooltip type '" + item_type + "'. Valid types are 'class', 'property', 'internal_property', 'method', 'signal', and 'theme_item'.");
+		ERR_FAIL_MSG("Invalid tooltip type \"" + item_type + "\".");
 	}
 
 	symbol_class_name = class_name;

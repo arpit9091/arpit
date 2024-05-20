@@ -373,7 +373,7 @@
 		</constant>
 		<constant name="LOOKUP_RESULT_CLASS_ENUM" value="6" enum="LookupResultType">
 		</constant>
-		<constant name="LOOKUP_RESULT_CLASS_TBD_GLOBALSCOPE" value="7" enum="LookupResultType">
+		<constant name="LOOKUP_RESULT_CLASS_TBD_GLOBALSCOPE" value="7" enum="LookupResultType" deprecated="">
 		</constant>
 		<constant name="LOOKUP_RESULT_CLASS_ANNOTATION" value="8" enum="LookupResultType">
 		</constant>

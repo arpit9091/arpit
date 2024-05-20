@@ -35,6 +35,7 @@
 #include "core/os/keyboard.h"
 #include "editor/debugger/editor_debugger_node.h"
 #include "editor/editor_command_palette.h"
+#include "editor/editor_help.h"
 #include "editor/editor_node.h"
 #include "editor/editor_settings.h"
 #include "editor/editor_string_names.h"
@@ -1037,7 +1038,7 @@ void ScriptTextEditor::_lookup_symbol(const String &p_symbol, int p_row, int p_c
 			case ScriptLanguage::LOOKUP_RESULT_CLASS_ANNOTATION: {
 				emit_signal(SNAME("go_to_help"), "class_annotation:" + result.class_name + ":" + result.class_member);
 			} break;
-			case ScriptLanguage::LOOKUP_RESULT_CLASS_TBD_GLOBALSCOPE: {
+			case ScriptLanguage::LOOKUP_RESULT_CLASS_TBD_GLOBALSCOPE: { // Deprecated.
 				emit_signal(SNAME("go_to_help"), "class_global:" + result.class_name + ":" + result.class_member);
 			} break;
 			default: {
@@ -1089,6 +1090,102 @@ void ScriptTextEditor::_validate_symbol(const String &p_symbol) {
 	} else {
 		text_edit->set_symbol_lookup_word_as_valid(false);
 	}
+}
+
+void ScriptTextEditor::_show_symbol_tooltip(const String &p_symbol, int p_row, int p_column) {
+	Node *base = get_tree()->get_edited_scene_root();
+	if (base) {
+		base = _find_node_for_script(base, base, script);
+	}
+
+	ScriptLanguage::LookupResult result;
+	const String code_text = code_editor->get_text_editor()->get_text_with_cursor_char(p_row, p_column);
+	const Error lc_error = script->get_language()->lookup_code(code_text, p_symbol, script->get_path(), base, result);
+	if (lc_error != OK) {
+		return;
+	}
+
+	String doc_symbol;
+	switch (result.type) {
+		case ScriptLanguage::LOOKUP_RESULT_SCRIPT_LOCATION: {
+			// TODO?
+			print_line("LOOKUP_RESULT_SCRIPT_LOCATION", result.class_name, result.class_member, result.class_path);
+		} break;
+		case ScriptLanguage::LOOKUP_RESULT_CLASS: {
+			doc_symbol = "class|" + result.class_name + "|";
+		} break;
+		case ScriptLanguage::LOOKUP_RESULT_CLASS_CONSTANT: {
+			StringName cname = result.class_name;
+			bool success;
+			while (true) {
+				ClassDB::get_integer_constant(cname, result.class_member, &success);
+				if (success) {
+					result.class_name = cname;
+					cname = ClassDB::get_parent_class(cname);
+				} else {
+					break;
+				}
+			}
+			doc_symbol = "constant|" + result.class_name + "|" + result.class_member;
+		} break;
+		case ScriptLanguage::LOOKUP_RESULT_CLASS_PROPERTY: {
+			doc_symbol = "property|" + result.class_name + "|" + result.class_member;
+		} break;
+		case ScriptLanguage::LOOKUP_RESULT_CLASS_METHOD: {
+			StringName cname = result.class_name;
+			while (true) {
+				if (ClassDB::has_method(cname, result.class_member)) {
+					result.class_name = cname;
+					cname = ClassDB::get_parent_class(cname);
+				} else {
+					break;
+				}
+			}
+			doc_symbol = "method|" + result.class_name + "|" + result.class_member;
+		} break;
+		case ScriptLanguage::LOOKUP_RESULT_CLASS_SIGNAL: {
+			StringName cname = result.class_name;
+			while (true) {
+				if (ClassDB::has_signal(cname, result.class_member)) {
+					result.class_name = cname;
+					cname = ClassDB::get_parent_class(cname);
+				} else {
+					break;
+				}
+			}
+			doc_symbol = "signal|" + result.class_name + "|" + result.class_member;
+		} break;
+		case ScriptLanguage::LOOKUP_RESULT_CLASS_ENUM: {
+			StringName cname = result.class_name;
+			StringName success;
+			while (true) {
+				success = ClassDB::get_integer_constant_enum(cname, result.class_member, true);
+				if (success != StringName()) {
+					result.class_name = cname;
+					cname = ClassDB::get_parent_class(cname);
+				} else {
+					break;
+				}
+			}
+			doc_symbol = "enum|" + result.class_name + "|" + result.class_member;
+		} break;
+		case ScriptLanguage::LOOKUP_RESULT_CLASS_TBD_GLOBALSCOPE: { // Deprecated.
+			// Not used by the engine and should not be used by extensions.
+		} break;
+		case ScriptLanguage::LOOKUP_RESULT_CLASS_ANNOTATION: {
+			doc_symbol = "annotation|" + result.class_name + "|" + result.class_member;
+		} break;
+		case ScriptLanguage::LOOKUP_RESULT_MAX: {
+			// Nothing to do.
+		} break;
+	}
+
+	if (doc_symbol.is_empty()) {
+		return;
+	}
+
+	EditorHelpBit *help_bit = memnew(EditorHelpBit(doc_symbol));
+	EditorHelpBitTooltip::show_tooltip(help_bit, this);
 }
 
 String ScriptTextEditor::_get_absolute_path(const String &rel_path) {
@@ -2218,6 +2315,7 @@ void ScriptTextEditor::_enable_code_editor() {
 	code_editor->connect("validate_script", callable_mp(this, &ScriptTextEditor::_validate_script));
 	code_editor->connect("load_theme_settings", callable_mp(this, &ScriptTextEditor::_load_theme_settings));
 	code_editor->get_text_editor()->connect("symbol_lookup", callable_mp(this, &ScriptTextEditor::_lookup_symbol));
+	code_editor->get_text_editor()->connect("symbol_hovered", callable_mp(this, &ScriptTextEditor::_show_symbol_tooltip));
 	code_editor->get_text_editor()->connect("symbol_validate", callable_mp(this, &ScriptTextEditor::_validate_symbol));
 	code_editor->get_text_editor()->connect("gutter_added", callable_mp(this, &ScriptTextEditor::_update_gutter_indexes));
 	code_editor->get_text_editor()->connect("gutter_removed", callable_mp(this, &ScriptTextEditor::_update_gutter_indexes));
@@ -2392,6 +2490,7 @@ ScriptTextEditor::ScriptTextEditor() {
 	update_settings();
 
 	code_editor->get_text_editor()->set_symbol_lookup_on_click_enabled(true);
+	code_editor->get_text_editor()->set_symbol_tooltip_on_hover_enabled(true);
 	code_editor->get_text_editor()->set_context_menu_enabled(false);
 
 	context_menu = memnew(PopupMenu);
