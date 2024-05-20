@@ -31,6 +31,7 @@
 #include "editor_debugger_tree.h"
 
 #include "editor/editor_node.h"
+#include "editor/editor_string_names.h"
 #include "editor/gui/editor_file_dialog.h"
 #include "editor/scene_tree_dock.h"
 #include "scene/debugger/scene_debugger.h"
@@ -61,6 +62,15 @@ void EditorDebuggerTree::_notification(int p_what) {
 			connect("cell_selected", callable_mp(this, &EditorDebuggerTree::_scene_tree_selected));
 			connect("item_collapsed", callable_mp(this, &EditorDebuggerTree::_scene_tree_folded));
 			connect("item_mouse_selected", callable_mp(this, &EditorDebuggerTree::_scene_tree_rmb_selected));
+		} break;
+
+		case NOTIFICATION_THEME_CHANGED: {
+			const StringName icon_max_width = "icon_max_width";
+			const int class_icon_size = get_theme_constant("class_icon_size", EditorStringName(Editor));
+			if (has_theme_constant_override(icon_max_width) && get_theme_constant(icon_max_width) == class_icon_size) {
+				return;
+			}
+			add_theme_constant_override(icon_max_width, class_icon_size);
 		} break;
 	}
 }
