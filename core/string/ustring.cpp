@@ -5048,8 +5048,8 @@ bool String::is_valid_filename() const {
 String String::validate_filename() const {
 	Vector<String> chars = String(invalid_filename_characters).split(" ");
 	String name = strip_edges();
-	for (int i = 0; i < chars.size(); i++) {
-		name = name.replace(chars[i], "_");
+	for (const String &chr : chars) {
+		name = name.replace(chr, "_");
 	}
 	return name;
 }
@@ -5057,8 +5057,7 @@ String String::validate_filename() const {
 bool String::is_valid_ip_address() const {
 	if (find(":") >= 0) {
 		Vector<String> ip = split(":");
-		for (int i = 0; i < ip.size(); i++) {
-			const String &n = ip[i];
+		for (const String &n : ip) {
 			if (n.is_empty()) {
 				continue;
 			}
@@ -5079,8 +5078,7 @@ bool String::is_valid_ip_address() const {
 		if (ip.size() != 4) {
 			return false;
 		}
-		for (int i = 0; i < ip.size(); i++) {
-			const String &n = ip[i];
+		for (const String &n : ip) {
 			if (!n.is_valid_int()) {
 				return false;
 			}
