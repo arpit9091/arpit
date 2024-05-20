@@ -60,7 +60,7 @@ repos:
           - --quiet-level
           - '3'
           - --ignore-words-list
-          - aesthetic,aesthetics,breaked,cancelled,colour,curvelinear,doubleclick,expct,findn,gird,hel,inout,lod,mis,nd,numer,ot,requestor,te,thirdparty,vai
+          - aesthetic,aesthetics,breaked,cancelled,colour,curvelinear,doubleclick,expct,findn,gird,hel,inout,lod,mis,nd,numer,ot,parm,requestor,te,thirdparty,vai
           - --builtin
           - clear,rare,en-GB_to_en-US
 
