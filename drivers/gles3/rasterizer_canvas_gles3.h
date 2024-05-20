@@ -108,8 +108,8 @@ class RasterizerCanvasGLES3 : public RendererCanvasRender {
 		RID texture;
 		struct {
 			bool enabled = false;
-			float z_far;
-			float y_offset;
+			float z_far = 0.0;
+			float y_offset = 0.0;
 			Transform2D directional_xform;
 		} shadow;
 	};
