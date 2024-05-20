@@ -127,11 +127,24 @@ protected:
 	static void _bind_methods();
 	static OS *singleton;
 
+#ifndef DISABLE_DEPRECATED
+	String read_string_from_stdin_bind_compat_91201();
+	static void _bind_compatibility_methods();
+#endif
+
 public:
 	enum RenderingDriver {
 		RENDERING_DRIVER_VULKAN,
 		RENDERING_DRIVER_OPENGL3,
 		RENDERING_DRIVER_D3D12,
+	};
+
+	enum StdHandleType {
+		STD_HANDLE_INVALID,
+		STD_HANDLE_CONSOLE,
+		STD_HANDLE_FILE,
+		STD_HANDLE_PIPE,
+		STD_HANDLE_UNKNOWN,
 	};
 
 	virtual PackedStringArray get_connected_midi_inputs();
@@ -154,7 +167,13 @@ public:
 	String get_system_font_path(const String &p_font_name, int p_weight = 400, int p_stretch = 100, bool p_italic = false) const;
 	Vector<String> get_system_font_path_for_text(const String &p_font_name, const String &p_text, const String &p_locale = String(), const String &p_script = String(), int p_weight = 400, int p_stretch = 100, bool p_italic = false) const;
 	String get_executable_path() const;
-	String read_string_from_stdin();
+
+	String read_string_from_stdin(int64_t p_buffer_size = 1024);
+	PackedByteArray read_buffer_from_stdin(int64_t p_buffer_size = 1024);
+	StdHandleType get_stdin_type() const;
+	StdHandleType get_stdout_type() const;
+	StdHandleType get_stderr_type() const;
+
 	int execute(const String &p_path, const Vector<String> &p_arguments, Array r_output = Array(), bool p_read_stderr = false, bool p_open_console = false);
 	Dictionary execute_with_pipe(const String &p_path, const Vector<String> &p_arguments);
 	int create_process(const String &p_path, const Vector<String> &p_arguments, bool p_open_console = false);
@@ -592,6 +611,7 @@ VARIANT_BITFIELD_CAST(core_bind::ResourceSaver::SaverFlags);
 
 VARIANT_ENUM_CAST(core_bind::OS::RenderingDriver);
 VARIANT_ENUM_CAST(core_bind::OS::SystemDir);
+VARIANT_ENUM_CAST(core_bind::OS::StdHandleType);
 
 VARIANT_ENUM_CAST(core_bind::Geometry2D::PolyBooleanOperation);
 VARIANT_ENUM_CAST(core_bind::Geometry2D::PolyJoinType);

@@ -455,6 +455,24 @@
 				Returns the amount of static memory being used by the program in bytes. Only works in debug builds.
 			</description>
 		</method>
+		<method name="get_stderr_type" qualifiers="const">
+			<return type="int" enum="OS.StdHandleType" />
+			<description>
+				Returns type of the standard error device.
+			</description>
+		</method>
+		<method name="get_stdin_type" qualifiers="const">
+			<return type="int" enum="OS.StdHandleType" />
+			<description>
+				Returns type of the standard input device.
+			</description>
+		</method>
+		<method name="get_stdout_type" qualifiers="const">
+			<return type="int" enum="OS.StdHandleType" />
+			<description>
+				Returns type of the standard output device.
+			</description>
+		</method>
 		<method name="get_system_dir" qualifiers="const">
 			<return type="String" />
 			<param index="0" name="dir" type="int" enum="OS.SystemDir" />
@@ -666,12 +684,28 @@
 				[b]Note:[/b] This method is implemented on Linux, macOS and Windows.
 			</description>
 		</method>
+		<method name="read_buffer_from_stdin">
+			<return type="PackedByteArray" />
+			<param index="0" name="buffer_size" type="int" />
+			<description>
+				Reads a user input as raw data from the standard input. This operation can be [i]blocking[/i], which causes the window to freeze if [method read_string_from_stdin] is called on the main thread.
+				- If standard input is console, this method will block until the program receives a line break in standard input (usually by the user pressing [kbd]Enter[/kbd]).
+				- If standard input is pipe, this method will block until a specific amount of data is read or pipe is closed.
+				- If standard input is a file, this method will read a specific amount of data (or less if end-of-file is reached) and return immediately.
+				[b]Note:[/b] This method is implemented on Linux, macOS and Windows.
+				[b]Note:[/b] On exported Windows builds, run the console wrapper executable to access the terminal. If standard input is console, calling this method without console wrapped will freeze permanently. If standard input is pipe or file, it can be used without console wrapper. If you need a single executable with full console support, use a custom build compiled with the [code]windows_subsystem=console[/code] flag.
+			</description>
+		</method>
 		<method name="read_string_from_stdin">
 			<return type="String" />
+			<param index="0" name="buffer_size" type="int" />
 			<description>
-				Reads a user input string from the standard input (usually the terminal). This operation is [i]blocking[/i], which causes the window to freeze if [method read_string_from_stdin] is called on the main thread. The thread calling [method read_string_from_stdin] will block until the program receives a line break in standard input (usually by the user pressing [kbd]Enter[/kbd]).
+				Reads a user input as a UTF-8 encoded string from the standard input. This operation can be [i]blocking[/i], which causes the window to freeze if [method read_string_from_stdin] is called on the main thread.
+				- If standard input is console, this method will block until the program receives a line break in standard input (usually by the user pressing [kbd]Enter[/kbd]).
+				- If standard input is pipe, this method will block until a specific amount of data is read or pipe is closed.
+				- If standard input is a file, this method will read a specific amount of data (or less if end-of-file is reached) and return immediately.
 				[b]Note:[/b] This method is implemented on Linux, macOS and Windows.
-				[b]Note:[/b] On exported Windows builds, run the console wrapper executable to access the terminal. Otherwise, the standard input will not work correctly. If you need a single executable with console support, use a custom build compiled with the [code]windows_subsystem=console[/code] flag.
+				[b]Note:[/b] On exported Windows builds, run the console wrapper executable to access the terminal. If standard input is console, calling this method without console wrapped will freeze permanently. If standard input is pipe or file, it can be used without console wrapper. If you need a single executable with full console support, use a custom build compiled with the [code]windows_subsystem=console[/code] flag.
 			</description>
 		</method>
 		<method name="request_permission">
@@ -810,6 +844,21 @@
 		</constant>
 		<constant name="SYSTEM_DIR_RINGTONES" value="7" enum="SystemDir">
 			Refers to the Ringtones directory path.
+		</constant>
+		<constant name="STD_HANDLE_INVALID" value="0" enum="StdHandleType">
+			Standard I/O device is invalid.
+		</constant>
+		<constant name="STD_HANDLE_CONSOLE" value="1" enum="StdHandleType">
+			Standard I/O device is a console.
+		</constant>
+		<constant name="STD_HANDLE_FILE" value="2" enum="StdHandleType">
+			Standard I/O device is a regular file.
+		</constant>
+		<constant name="STD_HANDLE_PIPE" value="3" enum="StdHandleType">
+			Standard I/O device is a FIFO/pipe.
+		</constant>
+		<constant name="STD_HANDLE_UNKNOWN" value="4" enum="StdHandleType">
+			Standard I/O device type is unknown.
 		</constant>
 	</constants>
 </class>
