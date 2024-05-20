@@ -2305,13 +2305,17 @@ void LineEdit::_emit_text_change() {
 	emit_signal(SNAME("text_changed"), text);
 	text_changed_dirty = false;
 }
-PackedStringArray LineEdit::get_configuration_warnings() const {
-	PackedStringArray warnings = Control::get_configuration_warnings();
+#ifdef TOOLS_ENABLED
+Array LineEdit::get_configuration_info() const {
+	Array warnings = Control::get_configuration_info();
 	if (secret_character.length() > 1) {
-		warnings.push_back("Secret Character property supports only one character. Extra characters will be ignored.");
+		CONFIG_WARNING_P(
+				RTR("Secret Character supports only one character. Extra characters will be ignored."),
+				"secret_character");
 	}
 	return warnings;
 }
+#endif
 
 void LineEdit::_shape() {
 	const Ref<Font> &font = theme_cache.font;

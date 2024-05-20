@@ -563,7 +563,7 @@ void CanvasItem::set_z_index(int p_z) {
 	ERR_FAIL_COND(p_z > RS::CANVAS_ITEM_Z_MAX);
 	z_index = p_z;
 	RS::get_singleton()->canvas_item_set_z_index(canvas_item, z_index);
-	update_configuration_warnings();
+	update_configuration_info();
 }
 
 void CanvasItem::set_z_as_relative(bool p_enabled) {

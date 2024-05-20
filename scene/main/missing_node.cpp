@@ -82,9 +82,10 @@ bool MissingNode::is_recording_properties() const {
 	return recording_properties;
 }
 
-PackedStringArray MissingNode::get_configuration_warnings() const {
+#ifdef TOOLS_ENABLED
+Array MissingNode::get_configuration_info() const {
 	// The mere existence of this node is warning.
-	PackedStringArray ret;
+	Array ret;
 	if (!original_scene.is_empty()) {
 		ret.push_back(vformat(RTR("This node was an instance of scene '%s', which was no longer available when this scene was loaded."), original_scene));
 		ret.push_back(vformat(RTR("Saving current scene will discard instance and all its properties, including editable children edits (if existing).")));
@@ -96,6 +97,7 @@ PackedStringArray MissingNode::get_configuration_warnings() const {
 	}
 	return ret;
 }
+#endif
 
 void MissingNode::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_original_class", "name"), &MissingNode::set_original_class);

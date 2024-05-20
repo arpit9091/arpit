@@ -32,6 +32,7 @@
 
 #include "core/os/keyboard.h"
 #include "editor/doc_tools.h"
+#include "editor/editor_configuration_info.h"
 #include "editor/editor_feature_profile.h"
 #include "editor/editor_node.h"
 #include "editor/editor_property_name_processor.h"
@@ -201,6 +202,23 @@ void EditorProperty::_notification(int p_what) {
 
 					if (no_children) {
 						text_size -= close->get_width() + 4 * EDSCALE;
+					}
+				}
+
+				if (!config_info.is_empty() && !read_only) {
+					Ref<Texture2D> config_info_icon;
+
+					String severity = EditorConfigurationInfo::get_max_severity(config_info);
+					config_info_icon = get_theme_icon(EditorConfigurationInfo::get_severity_icon(severity), SNAME("EditorIcons"));
+
+					rect.size.x -= config_info_icon->get_width() + get_theme_constant(SNAME("hseparator"), SNAME("Tree"));
+
+					if (is_layout_rtl()) {
+						rect.position.x += config_info_icon->get_width() + get_theme_constant(SNAME("hseparator"), SNAME("Tree"));
+					}
+
+					if (no_children) {
+						text_size -= config_info_icon->get_width() + 4 * EDSCALE;
 					}
 				}
 			}
@@ -389,6 +407,30 @@ void EditorProperty::_notification(int p_what) {
 				}
 			} else {
 				delete_rect = Rect2();
+			}
+
+			if (!config_info.is_empty() && !read_only) {
+				Ref<Texture2D> config_info_icon;
+
+				String severity = EditorConfigurationInfo::get_max_severity(config_info);
+				config_info_icon = get_theme_icon(EditorConfigurationInfo::get_severity_icon(severity), SNAME("EditorIcons"));
+
+				ofs -= config_info_icon->get_width() + get_theme_constant(SNAME("hseparator"), SNAME("Tree"));
+
+				Color color2(1, 1, 1);
+				if (config_info_hover) {
+					color2.r *= 1.2;
+					color2.g *= 1.2;
+					color2.b *= 1.2;
+				}
+				config_info_rect = Rect2(ofs, ((size.height - config_info_icon->get_height()) / 2), config_info_icon->get_width(), config_info_icon->get_height());
+				if (rtl) {
+					draw_texture(config_info_icon, Vector2(size.width - config_info_rect.position.x - config_info_icon->get_width(), config_info_rect.position.y), color2);
+				} else {
+					draw_texture(config_info_icon, config_info_rect.position, color2);
+				}
+			} else {
+				config_info_rect = Rect2();
 			}
 		} break;
 		case NOTIFICATION_ENTER_TREE: {
@@ -719,6 +761,12 @@ void EditorProperty::gui_input(const Ref<InputEvent> &p_event) {
 			check_hover = new_check_hover;
 			queue_redraw();
 		}
+
+		bool new_config_info_hover = config_info_rect.has_point(mpos) && !button_left;
+		if (new_config_info_hover != config_info_hover) {
+			config_info_hover = new_config_info_hover;
+			queue_redraw();
+		}
 	}
 
 	Ref<InputEventMouseButton> mb = p_event;
@@ -774,6 +822,16 @@ void EditorProperty::gui_input(const Ref<InputEvent> &p_event) {
 			checked = !checked;
 			queue_redraw();
 			emit_signal(SNAME("property_checked"), property, checked);
+		}
+
+		if (config_info_rect.has_point(mpos)) {
+			if (config_info_dialog == nullptr) {
+				config_info_dialog = memnew(AcceptDialog);
+				add_child(config_info_dialog);
+				config_info_dialog->set_title(TTR("Node Configuration Info"));
+			}
+			config_info_dialog->set_text(EditorConfigurationInfo::format_dict_list_as_string(config_info, true, false));
+			config_info_dialog->popup_centered();
 		}
 	} else if (mb.is_valid() && mb->is_pressed() && mb->get_button_index() == MouseButton::RIGHT) {
 		accept_event();
@@ -895,6 +953,16 @@ bool EditorProperty::is_selectable() const {
 	return selectable;
 }
 
+void EditorProperty::set_config_info(const Array &p_config_info) {
+	config_info = p_config_info;
+	queue_redraw();
+	queue_sort();
+}
+
+Array EditorProperty::get_config_info() const {
+	return config_info;
+}
+
 void EditorProperty::set_name_split_ratio(float p_ratio) {
 	split_ratio = p_ratio;
 }
@@ -957,6 +1025,12 @@ void EditorProperty::_update_pin_flags() {
 			}
 		}
 	}
+}
+
+void EditorProperty::_update_config_info() {
+	Array new_config_info = EditorConfigurationInfo::get_configuration_info_dicts(object);
+	new_config_info = EditorConfigurationInfo::filter_dict_list_for_property(new_config_info, property_path);
+	set_config_info(new_config_info);
 }
 
 Control *EditorProperty::make_custom_tooltip(const String &p_text) const {
@@ -1039,6 +1113,9 @@ void EditorProperty::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_deletable", "deletable"), &EditorProperty::set_deletable);
 	ClassDB::bind_method(D_METHOD("is_deletable"), &EditorProperty::is_deletable);
 
+	ClassDB::bind_method(D_METHOD("set_config_info", "config_info"), &EditorProperty::set_config_info);
+	ClassDB::bind_method(D_METHOD("get_config_info"), &EditorProperty::get_config_info);
+
 	ClassDB::bind_method(D_METHOD("get_edited_property"), &EditorProperty::get_edited_property);
 	ClassDB::bind_method(D_METHOD("get_edited_object"), &EditorProperty::get_edited_object);
 
@@ -1056,6 +1133,7 @@ void EditorProperty::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "draw_warning"), "set_draw_warning", "is_draw_warning");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "keying"), "set_keying", "is_keying");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "deletable"), "set_deletable", "is_deletable");
+	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "config_info"), "set_config_info", "get_config_info");
 
 	ADD_SIGNAL(MethodInfo("property_changed", PropertyInfo(Variant::STRING_NAME, "property"), PropertyInfo(Variant::NIL, "value", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NIL_IS_VARIANT), PropertyInfo(Variant::STRING_NAME, "field"), PropertyInfo(Variant::BOOL, "changing")));
 	ADD_SIGNAL(MethodInfo("multiple_properties_changed", PropertyInfo(Variant::PACKED_STRING_ARRAY, "properties"), PropertyInfo(Variant::ARRAY, "value")));
@@ -3407,6 +3485,7 @@ void EditorInspector::update_tree() {
 				ep->set_keying(keying);
 				ep->set_read_only(property_read_only || all_read_only);
 				ep->set_deletable(deletable_properties || p.name.begins_with("metadata/"));
+				ep->_update_config_info();
 			}
 
 			current_vbox->add_child(editors[i].property_editor);
@@ -3537,6 +3616,9 @@ void EditorInspector::edit(Object *p_object) {
 	per_array_page.clear();
 
 	object = p_object;
+
+	property_configuration_info.clear();
+	_update_configuration_info();
 
 	if (object) {
 		update_scroll_request = 0; //reset
@@ -4041,6 +4123,49 @@ void EditorInspector::_node_removed(Node *p_node) {
 	}
 }
 
+void EditorInspector::_configuration_info_changed(Object *p_object) {
+	// REDMSER TODO: How to update sub-inspectors (for resources)? Caching and == check must be done a bit differently, it seems.
+	if (object == p_object) {
+		// Only update the tree if the list of configuration info has changed.
+		if (_update_configuration_info()) {
+			update_tree_pending = true;
+		}
+	}
+}
+
+bool EditorInspector::_update_configuration_info() {
+	bool changed = false;
+	LocalVector<int> found_indices;
+	Array config_info_list = EditorConfigurationInfo::get_configuration_info_dicts(object);
+
+	// New and changed entries.
+	for (int i = 0; i < config_info_list.size(); i++) {
+		Dictionary config_info = config_info_list[i];
+		if (!config_info.has("property")) {
+			continue;
+		}
+
+		int found_index = property_configuration_info.find(config_info);
+		if (found_index < 0) {
+			found_index = property_configuration_info.size();
+			property_configuration_info.push_back(config_info);
+			changed = true;
+		}
+		found_indices.push_back(found_index);
+	}
+
+	// Removed entries.
+	for (uint32_t i = 0; i < property_configuration_info.size(); i++) {
+		if (found_indices.find(i) < 0) {
+			property_configuration_info.remove_at(i);
+			i--;
+			changed = true;
+		}
+	}
+
+	return changed;
+}
+
 void EditorInspector::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_READY: {
@@ -4049,12 +4174,14 @@ void EditorInspector::_notification(int p_what) {
 			add_theme_style_override("panel", get_theme_stylebox(SNAME("panel"), SNAME("Tree")));
 			if (!sub_inspector) {
 				get_tree()->connect("node_removed", callable_mp(this, &EditorInspector::_node_removed));
+				EditorNode::get_singleton()->connect(EditorStringName(configuration_info_changed), callable_mp(this, &EditorInspector::_configuration_info_changed));
 			}
 		} break;
 
 		case NOTIFICATION_PREDELETE: {
 			if (!sub_inspector && is_inside_tree()) {
 				get_tree()->disconnect("node_removed", callable_mp(this, &EditorInspector::_node_removed));
+				EditorNode::get_singleton()->disconnect(EditorStringName(configuration_info_changed), callable_mp(this, &EditorInspector::_configuration_info_changed));
 			}
 			edit(nullptr);
 		} break;

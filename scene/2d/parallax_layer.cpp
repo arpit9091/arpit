@@ -138,15 +138,17 @@ void ParallaxLayer::set_base_offset_and_scale(const Point2 &p_offset, real_t p_s
 	_update_mirroring();
 }
 
-PackedStringArray ParallaxLayer::get_configuration_warnings() const {
-	PackedStringArray warnings = Node::get_configuration_warnings();
+#ifdef TOOLS_ENABLED
+Array ParallaxLayer::get_configuration_info() const {
+	Array warnings = Node::get_configuration_info();
 
 	if (!Object::cast_to<ParallaxBackground>(get_parent())) {
-		warnings.push_back(RTR("ParallaxLayer node only works when set as child of a ParallaxBackground node."));
+		CONFIG_WARNING(RTR("ParallaxLayer node only works when set as child of a ParallaxBackground node."));
 	}
 
 	return warnings;
 }
+#endif
 
 void ParallaxLayer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_motion_scale", "scale"), &ParallaxLayer::set_motion_scale);

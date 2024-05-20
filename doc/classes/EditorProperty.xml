@@ -72,6 +72,9 @@
 		<member name="checked" type="bool" setter="set_checked" getter="is_checked" default="false">
 			Used by the inspector, set to [code]true[/code] when the property is checked.
 		</member>
+		<member name="config_info" type="Array" setter="set_config_info" getter="get_config_info" default="[]">
+			Used by the inspector, set to show a list of configuration info on the property.
+		</member>
 		<member name="deletable" type="bool" setter="set_deletable" getter="is_deletable" default="false">
 			Used by the inspector, set to [code]true[/code] when the property can be deleted by the user.
 		</member>

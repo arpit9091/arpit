@@ -34,13 +34,15 @@ void SkeletonModifier3D::_validate_property(PropertyInfo &p_property) const {
 	//
 }
 
-PackedStringArray SkeletonModifier3D::get_configuration_warnings() const {
-	PackedStringArray warnings = Node3D::get_configuration_warnings();
+#ifdef TOOLS_ENABLED
+Array SkeletonModifier3D::get_configuration_info() const {
+	Array warnings = Node3D::get_configuration_info();
 	if (skeleton_id.is_null()) {
-		warnings.push_back(RTR("Skeleton3D node not set! SkeletonModifier3D must be child of Skeleton3D or set a path to an external skeleton."));
+		CONFIG_WARNING(RTR("Skeleton3D node not set! SkeletonModifier3D must be child of Skeleton3D or set a path to an external skeleton."));
 	}
 	return warnings;
 }
+#endif
 
 /* Skeleton3D */
 
@@ -68,7 +70,7 @@ void SkeletonModifier3D::_update_skeleton() {
 	if (old_sk != new_sk) {
 		_skeleton_changed(old_sk, new_sk);
 	}
-	update_configuration_warnings();
+	update_configuration_info();
 }
 
 void SkeletonModifier3D::_skeleton_changed(Skeleton3D *p_old, Skeleton3D *p_new) {

@@ -37,6 +37,11 @@
 #include "core/os/os.h"
 #include "scene/main/node.h" //only so casting works
 
+#ifdef TOOLS_ENABLED
+#include "editor/editor_node.h"
+#include "editor/editor_string_names.h"
+#endif // TOOLS_ENABLED
+
 #include <stdio.h>
 
 void Resource::emit_changed() {
@@ -153,12 +158,6 @@ void Resource::set_name(const String &p_name) {
 
 String Resource::get_name() const {
 	return name;
-}
-
-void Resource::update_configuration_warning() {
-	if (_update_configuration_warning) {
-		_update_configuration_warning();
-	}
 }
 
 bool Resource::editor_can_reload_from_file() {
@@ -485,7 +484,6 @@ void Resource::reset_local_to_scene() {
 }
 
 Node *(*Resource::_get_local_scene_func)() = nullptr;
-void (*Resource::_update_configuration_warning)() = nullptr;
 
 void Resource::set_as_translation_remapped(bool p_remapped) {
 	if (remapped_list.in_list() == p_remapped) {
@@ -530,6 +528,27 @@ String Resource::get_id_for_path(const String &p_path) const {
 }
 #endif
 
+#ifdef TOOLS_ENABLED
+Array Resource::get_configuration_info() const {
+	Array ret;
+
+	Array info;
+	if (GDVIRTUAL_CALL(_get_configuration_info, info)) {
+		ret.append_array(info);
+	}
+
+	return ret;
+}
+#endif
+
+void Resource::update_configuration_info() {
+#ifdef TOOLS_ENABLED
+	if (Engine::get_singleton()->is_editor_hint()) {
+		EditorNode::get_singleton()->emit_signal(EditorStringName(configuration_info_changed), this);
+	}
+#endif
+}
+
 void Resource::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_path", "path"), &Resource::_set_path);
 	ClassDB::bind_method(D_METHOD("take_over_path", "path"), &Resource::_take_over_path);
@@ -545,6 +564,7 @@ void Resource::_bind_methods() {
 	ClassDB::bind_static_method("Resource", D_METHOD("generate_scene_unique_id"), &Resource::generate_scene_unique_id);
 	ClassDB::bind_method(D_METHOD("set_scene_unique_id", "id"), &Resource::set_scene_unique_id);
 	ClassDB::bind_method(D_METHOD("get_scene_unique_id"), &Resource::get_scene_unique_id);
+	ClassDB::bind_method(D_METHOD("update_configuration_info"), &Resource::update_configuration_info);
 
 	ClassDB::bind_method(D_METHOD("emit_changed"), &Resource::emit_changed);
 
@@ -563,6 +583,7 @@ void Resource::_bind_methods() {
 
 	::ClassDB::add_virtual_method(get_class_static(), get_rid_bind, true, Vector<String>(), true);
 	GDVIRTUAL_BIND(_setup_local_to_scene);
+	GDVIRTUAL_BIND(_get_configuration_info);
 }
 
 Resource::Resource() :

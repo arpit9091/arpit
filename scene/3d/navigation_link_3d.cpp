@@ -380,7 +380,7 @@ void NavigationLink3D::set_start_position(Vector3 p_position) {
 #endif // DEBUG_ENABLED
 
 	update_gizmos();
-	update_configuration_warnings();
+	update_configuration_info();
 }
 
 void NavigationLink3D::set_end_position(Vector3 p_position) {
@@ -401,7 +401,7 @@ void NavigationLink3D::set_end_position(Vector3 p_position) {
 #endif // DEBUG_ENABLED
 
 	update_gizmos();
-	update_configuration_warnings();
+	update_configuration_info();
 }
 
 void NavigationLink3D::set_global_start_position(Vector3 p_position) {
@@ -458,12 +458,14 @@ void NavigationLink3D::set_travel_cost(real_t p_travel_cost) {
 	NavigationServer3D::get_singleton()->link_set_travel_cost(link, travel_cost);
 }
 
-PackedStringArray NavigationLink3D::get_configuration_warnings() const {
-	PackedStringArray warnings = Node::get_configuration_warnings();
+#ifdef TOOLS_ENABLED
+Array NavigationLink3D::get_configuration_info() const {
+	Array warnings = Node::get_configuration_info();
 
 	if (start_position.is_equal_approx(end_position)) {
-		warnings.push_back(RTR("NavigationLink3D start position should be different than the end position to be useful."));
+		CONFIG_WARNING(RTR("NavigationLink3D start position should be different than the end position to be useful."));
 	}
 
 	return warnings;
 }
+#endif

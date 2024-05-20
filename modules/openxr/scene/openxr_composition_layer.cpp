@@ -208,7 +208,7 @@ void OpenXRCompositionLayer::set_enable_hole_punch(bool p_enable) {
 		_remove_fallback_node();
 	}
 
-	update_configuration_warnings();
+	update_configuration_info();
 }
 
 bool OpenXRCompositionLayer::get_enable_hole_punch() const {
@@ -218,7 +218,7 @@ bool OpenXRCompositionLayer::get_enable_hole_punch() const {
 void OpenXRCompositionLayer::set_sort_order(int p_order) {
 	if (openxr_layer_provider) {
 		openxr_layer_provider->set_sort_order(p_order);
-		update_configuration_warnings();
+		update_configuration_info();
 	}
 }
 
@@ -333,10 +333,10 @@ void OpenXRCompositionLayer::_notification(int p_what) {
 					openxr_layer_provider->set_viewport(RID(), Size2i());
 				}
 			}
-			update_configuration_warnings();
+			update_configuration_info();
 		} break;
 		case NOTIFICATION_LOCAL_TRANSFORM_CHANGED: {
-			update_configuration_warnings();
+			update_configuration_info();
 		} break;
 		case NOTIFICATION_ENTER_TREE: {
 			if (composition_layer_extension) {
@@ -396,23 +396,25 @@ bool OpenXRCompositionLayer::_set(const StringName &p_property, const Variant &p
 	return true;
 }
 
-PackedStringArray OpenXRCompositionLayer::get_configuration_warnings() const {
-	PackedStringArray warnings = Node3D::get_configuration_warnings();
+#ifdef TOOLS_ENABLED
+Array OpenXRCompositionLayer::get_configuration_info() const {
+	Array warnings = Node3D::get_configuration_info();
 
 	if (is_visible() && is_inside_tree()) {
 		XROrigin3D *origin = Object::cast_to<XROrigin3D>(get_parent());
 		if (origin == nullptr) {
-			warnings.push_back(RTR("OpenXR composition layers must have an XROrigin3D node as their parent."));
+			CONFIG_WARNING(RTR("OpenXR composition layers must have an XROrigin3D node as their parent."));
 		}
 	}
 
 	if (!get_transform().basis.is_orthonormal()) {
-		warnings.push_back(RTR("OpenXR composition layers must have orthonormalized transforms (ie. no scale or shearing)."));
+		CONFIG_WARNING(RTR("OpenXR composition layers must have orthonormalized transforms (ie. no scale or shearing)."));
 	}
 
 	if (enable_hole_punch && get_sort_order() >= 0) {
-		warnings.push_back(RTR("Hole punching won't work as expected unless the sort order is less than zero."));
+		CONFIG_WARNING(RTR("Hole punching won't work as expected unless the sort order is less than zero."));
 	}
 
 	return warnings;
 }
+#endif

@@ -2208,10 +2208,6 @@ void BaseMaterial3D::set_flag(Flags p_flag, bool p_enabled) {
 		notify_property_list_changed();
 	}
 
-	if (p_flag == FLAG_PARTICLE_TRAILS_MODE) {
-		update_configuration_warning();
-	}
-
 	_queue_shader_change();
 }
 

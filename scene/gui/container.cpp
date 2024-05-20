@@ -195,15 +195,17 @@ void Container::_notification(int p_what) {
 	}
 }
 
-PackedStringArray Container::get_configuration_warnings() const {
-	PackedStringArray warnings = Control::get_configuration_warnings();
+#ifdef TOOLS_ENABLED
+Array Container::get_configuration_info() const {
+	Array warnings = Control::get_configuration_info();
 
 	if (get_class() == "Container" && get_script().is_null()) {
-		warnings.push_back(RTR("Container by itself serves no purpose unless a script configures its children placement behavior.\nIf you don't intend to add a script, use a plain Control node instead."));
+		CONFIG_WARNING(RTR("Container by itself serves no purpose unless a script configures its children placement behavior.\nIf you don't intend to add a script, use a plain Control node instead."));
 	}
 
 	return warnings;
 }
+#endif
 
 void Container::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("queue_sort"), &Container::queue_sort);

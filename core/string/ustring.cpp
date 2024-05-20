@@ -5912,3 +5912,11 @@ String RTRN(const String &p_text, const String &p_text_plural, int p_n, const St
 	}
 	return p_text_plural;
 }
+
+Dictionary _make_configuration_info(const String &p_message, const String &p_property_name, const String &p_severity) {
+	Dictionary config_info;
+	config_info["message"] = p_message;
+	config_info["property"] = p_property_name;
+	config_info["severity"] = p_severity;
+	return config_info;
+}

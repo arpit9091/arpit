@@ -650,15 +650,17 @@ void NavigationAgent2D::_avoidance_done(Vector3 p_new_velocity) {
 	emit_signal(SNAME("velocity_computed"), safe_velocity);
 }
 
-PackedStringArray NavigationAgent2D::get_configuration_warnings() const {
-	PackedStringArray warnings = Node::get_configuration_warnings();
+#ifdef TOOLS_ENABLED
+Array NavigationAgent2D::get_configuration_info() const {
+	Array warnings = Node::get_configuration_info();
 
 	if (!Object::cast_to<Node2D>(get_parent())) {
-		warnings.push_back(RTR("The NavigationAgent2D can be used only under a Node2D inheriting parent node."));
+		CONFIG_WARNING(RTR("The NavigationAgent2D can be used only under a Node2D inheriting parent node."));
 	}
 
 	return warnings;
 }
+#endif
 
 void NavigationAgent2D::_update_navigation() {
 	if (agent_parent == nullptr) {

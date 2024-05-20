@@ -38,6 +38,7 @@
 #include "core/templates/vector.h"
 #include "core/typedefs.h"
 #include "core/variant/array.h"
+#include "core/variant/dictionary.h"
 
 /*************************************************************************/
 /*  CharProxy                                                            */
@@ -618,6 +619,16 @@ _FORCE_INLINE_ String ETRN(const String &p_text, const String &p_text_plural, in
 	}
 	return p_text_plural;
 }
+
+// Internal function for configuration info macros.
+Dictionary _make_configuration_info(const String &p_message, const String &p_property_name, const String &p_severity);
+
+#define CONFIG_INFO(message) warnings.push_back(_make_configuration_info(message, "", "info"));
+#define CONFIG_INFO_P(message, property_name) warnings.push_back(_make_configuration_info(message, property_name, "info"));
+#define CONFIG_WARNING(message) warnings.push_back(_make_configuration_info(message, "", "warning"));
+#define CONFIG_WARNING_P(message, property_name) warnings.push_back(_make_configuration_info(message, property_name, "warning"));
+#define CONFIG_ERROR(message) warnings.push_back(_make_configuration_info(message, "", "error"));
+#define CONFIG_ERROR_P(message, property_name) warnings.push_back(_make_configuration_info(message, property_name, "error"));
 
 bool select_word(const String &p_s, int p_col, int &r_beg, int &r_end);
 
