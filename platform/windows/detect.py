@@ -4,6 +4,7 @@ import subprocess
 import sys
 from methods import print_warning, print_error
 from platform_methods import detect_arch
+import contextlib
 
 from typing import TYPE_CHECKING
 
@@ -20,7 +21,7 @@ def get_name():
 
 def try_cmd(test, prefix, arch):
     if arch:
-        try:
+        with contextlib.suppress(Exception):
             out = subprocess.Popen(
                 get_mingw_bin_prefix(prefix, arch) + test,
                 shell=True,
@@ -30,8 +31,6 @@ def try_cmd(test, prefix, arch):
             out.communicate()
             if out.returncode == 0:
                 return True
-        except Exception:
-            pass
     else:
         for a in ["x86_64", "x86_32", "arm64", "arm32"]:
             try:
@@ -178,7 +177,7 @@ def get_opts():
             caller_frame = inspect.stack()[1]
             caller_script_dir = os.path.dirname(os.path.abspath(caller_frame[1]))
             d3d12_deps_folder = os.path.join(caller_script_dir, "bin", "build_deps")
-        except:  # Give up.
+        except Exception:  # Give up.
             d3d12_deps_folder = ""
 
     return [
@@ -523,7 +522,7 @@ def configure_msvc(env: "SConsEnvironment", vcvars_msvc_config):
             env.Append(CXXFLAGS=["/bigobj"])
 
         # PIX
-        if not env["arch"] in ["x86_64", "arm64"] or env["pix_path"] == "" or not os.path.exists(env["pix_path"]):
+        if env["arch"] not in ["x86_64", "arm64"] or env["pix_path"] == "" or not os.path.exists(env["pix_path"]):
             env["use_pix"] = False
 
         if env["use_pix"]:
@@ -750,7 +749,7 @@ def configure_mingw(env: "SConsEnvironment"):
         env.Append(LIBS=["dxgi", "dxguid"])
 
         # PIX
-        if not env["arch"] in ["x86_64", "arm64"] or env["pix_path"] == "" or not os.path.exists(env["pix_path"]):
+        if env["arch"] not in ["x86_64", "arm64"] or env["pix_path"] == "" or not os.path.exists(env["pix_path"]):
             env["use_pix"] = False
 
         if env["use_pix"]:

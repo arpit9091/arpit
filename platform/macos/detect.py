@@ -107,7 +107,7 @@ def configure(env: "SConsEnvironment"):
 
     env.Append(CCFLAGS=["-fobjc-arc"])
 
-    if not "osxcross" in env:  # regular native build
+    if "osxcross" not in env:  # regular native build
         if env["macports_clang"] != "no":
             mpprefix = os.environ.get("MACPORTS_PREFIX", "/opt/local")
             mpclangver = env["macports_clang"]

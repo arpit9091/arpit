@@ -4,6 +4,8 @@ import sys
 import methods
 import time
 
+from SCons.Script import BoolVariable, Variables, ARGUMENTS, SConscript
+
 # Enable ANSI escape code support on Windows 10 and later (for colored console output).
 # <https://github.com/python/cpython/issues/73245>
 if sys.stdout.isatty() and sys.platform == "win32":
@@ -720,7 +722,7 @@ if env["static_icu_data"]:
     env.Append(CXXFLAGS=["-DICU_STATIC_DATA"])
     env.Append(CPPPATH=["../../../thirdparty/icu4c/"])
 else:
-    thirdparty_sources += ["../icu_data/icudata_stub.cpp"]
+    thirdparty_icu_sources += ["../icu_data/icudata_stub.cpp"]
 
 env_icu.Append(CPPPATH=["../../../thirdparty/icu4c/common/", "../../../thirdparty/icu4c/i18n/"])
 env_icu.Append(
@@ -758,7 +760,7 @@ env.Append(LIBS=[lib])
 
 env.Append(CPPDEFINES=["GDEXTENSION"])
 env.Append(CPPPATH=["../"])
-sources = Glob("../*.cpp")
+sources = Glob("../*.cpp")  # noqa: F821
 
 if env["platform"] == "macos":
     methods.write_macos_plist(
@@ -777,7 +779,7 @@ else:
         source=sources,
     )
 
-Default(library)
+Default(library)  # noqa: F821
 
 
 def print_elapsed_time():

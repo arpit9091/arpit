@@ -81,9 +81,9 @@ def disable_warnings(self):
         self.Append(CCFLAGS=["/w"])
         self.Append(CFLAGS=["/w"])
         self.Append(CXXFLAGS=["/w"])
-        self["CCFLAGS"] = [x for x in self["CCFLAGS"] if not x in warn_flags]
-        self["CFLAGS"] = [x for x in self["CFLAGS"] if not x in warn_flags]
-        self["CXXFLAGS"] = [x for x in self["CXXFLAGS"] if not x in warn_flags]
+        self["CCFLAGS"] = [x for x in self["CCFLAGS"] if x not in warn_flags]
+        self["CFLAGS"] = [x for x in self["CFLAGS"] if x not in warn_flags]
+        self["CXXFLAGS"] = [x for x in self["CXXFLAGS"] if x not in warn_flags]
     else:
         self.Append(CCFLAGS=["-w"])
         self.Append(CFLAGS=["-w"])
@@ -117,31 +117,31 @@ def make_icu_data(target, source, env):
 def write_macos_plist(target, binary_name, identifier, name):
     os.makedirs(f"{target}/Resource/", exist_ok=True)
     with open(f"{target}/Resource/Info.plist", "w", encoding="utf-8", newline="\n") as f:
-        f.write(f'<?xml version="1.0" encoding="UTF-8"?>\n')
+        f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         f.write(
-            f'<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n'
+            '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n'
         )
-        f.write(f'<plist version="1.0">\n')
-        f.write(f"<dict>\n")
-        f.write(f"\t<key>CFBundleExecutable</key>\n")
+        f.write('<plist version="1.0">\n')
+        f.write("<dict>\n")
+        f.write("\t<key>CFBundleExecutable</key>\n")
         f.write(f"\t<string>{binary_name}</string>\n")
-        f.write(f"\t<key>CFBundleIdentifier</key>\n")
+        f.write("\t<key>CFBundleIdentifier</key>\n")
         f.write(f"\t<string>{identifier}</string>\n")
-        f.write(f"\t<key>CFBundleInfoDictionaryVersion</key>\n")
-        f.write(f"\t<string>6.0</string>\n")
-        f.write(f"\t<key>CFBundleName</key>\n")
+        f.write("\t<key>CFBundleInfoDictionaryVersion</key>\n")
+        f.write("\t<string>6.0</string>\n")
+        f.write("\t<key>CFBundleName</key>\n")
         f.write(f"\t<string>{name}</string>\n")
-        f.write(f"\t<key>CFBundlePackageType</key>\n")
-        f.write(f"\t<string>FMWK</string>\n")
-        f.write(f"\t<key>CFBundleShortVersionString</key>\n")
-        f.write(f"\t<string>1.0.0</string>\n")
-        f.write(f"\t<key>CFBundleSupportedPlatforms</key>\n")
-        f.write(f"\t<array>\n")
-        f.write(f"\t\t<string>MacOSX</string>\n")
-        f.write(f"\t</array>\n")
-        f.write(f"\t<key>CFBundleVersion</key>\n")
-        f.write(f"\t<string>1.0.0</string>\n")
-        f.write(f"\t<key>LSMinimumSystemVersion</key>\n")
-        f.write(f"\t<string>10.14</string>\n")
-        f.write(f"</dict>\n")
-        f.write(f"</plist>\n")
+        f.write("\t<key>CFBundlePackageType</key>\n")
+        f.write("\t<string>FMWK</string>\n")
+        f.write("\t<key>CFBundleShortVersionString</key>\n")
+        f.write("\t<string>1.0.0</string>\n")
+        f.write("\t<key>CFBundleSupportedPlatforms</key>\n")
+        f.write("\t<array>\n")
+        f.write("\t\t<string>MacOSX</string>\n")
+        f.write("\t</array>\n")
+        f.write("\t<key>CFBundleVersion</key>\n")
+        f.write("\t<string>1.0.0</string>\n")
+        f.write("\t<key>LSMinimumSystemVersion</key>\n")
+        f.write("\t<string>10.14</string>\n")
+        f.write("</dict>\n")
+        f.write("</plist>\n")

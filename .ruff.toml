@@ -1,0 +1,4 @@
+extend-exclude = ["thirdparty"]
+extend-include = ["SConstruct", "SCSub"]
+line-length = 120
+target-version = "py38"
